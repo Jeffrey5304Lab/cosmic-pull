@@ -340,10 +340,12 @@ export class GameSim {
   }
 
   // ── read-only views for the renderer (WORLD units) ──────────
-  get grainViews(): { x: number; y: number; color: StardustColor; r: number }[] {
+  get grainViews(): { x: number; y: number; vx: number; vy: number; color: StardustColor; r: number }[] {
     return this.grains.map((g) => ({
       x: g.body.position.x / SCALE,
       y: g.body.position.y / SCALE,
+      vx: g.body.velocity.x / SCALE,
+      vy: g.body.velocity.y / SCALE,
       color: g.color,
       r: PHYS.grainR,
     }))

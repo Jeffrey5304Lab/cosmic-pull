@@ -148,7 +148,22 @@ function frame(now: number): void {
   particles.draw(ctx)
   ctx.restore()
 
+  // soft vignette for depth/atmosphere (screen space)
+  drawVignette(rect.width, rect.height)
+
   requestAnimationFrame(frame)
+}
+
+let vignette: { grad: CanvasGradient; w: number; h: number } | null = null
+function drawVignette(w: number, h: number): void {
+  if (!vignette || vignette.w !== w || vignette.h !== h) {
+    const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.42, w / 2, h / 2, Math.max(w, h) * 0.72)
+    g.addColorStop(0, 'rgba(43,38,32,0)')
+    g.addColorStop(1, 'rgba(43,38,32,0.16)')
+    vignette = { grad: g, w, h }
+  }
+  ctx.fillStyle = vignette.grad
+  ctx.fillRect(0, 0, w, h)
 }
 
 function checkResolution(): void {

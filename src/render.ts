@@ -65,7 +65,7 @@ export class Renderer {
     for (const w of sim.level.walls) this.drawWall(w.x, w.y, w.w, w.h, w.angle ?? 0)
     for (const c of sim.cupViews)
       this.drawCup(c.def.x, c.def.y, c.def.w, c.def.h, c.ratio, c.def.color, timeMs, c.def.need - c.filled)
-    for (const g of sim.grainViews) this.drawGrain(g.x, g.y, g.r, g.color, timeMs)
+    for (const g of sim.grainViews) this.drawGrain(g.x, g.y, g.vx, g.vy, g.r, g.color, timeMs)
     for (const p of sim.pinViews) this.drawPin(p.x, p.y, p.len, p.thick, p.angle, p.id === pullable, timeMs)
 
     ctx.restore()
@@ -214,11 +214,31 @@ export class Renderer {
   }
 
   // ── stardust ────────────────────────────────────────────────
-  private drawGrain(x: number, y: number, r: number, color: StardustColor, timeMs: number): void {
+  private drawGrain(x: number, y: number, vx: number, vy: number, r: number, color: StardustColor, timeMs: number): void {
     const ctx = this.ctx
     const hex = grainHex(color)
     const tw = 0.8 + 0.2 * Math.sin(timeMs / 170 + x * 1.3 + y) // per-grain twinkle
     const glow = 1 + 0.18 * Math.sin(timeMs / 200 + x + y)
+
+    // motion trail — fast grains streak like flowing light (comet tail)
+    const speed = Math.hypot(vx, vy)
+    if (speed > 0.5) {
+      const len = Math.min(speed * 0.9, 6)
+      const nx = vx / speed
+      const ny = vy / speed
+      const grdT = ctx.createLinearGradient(x, y, x - nx * len, y - ny * len)
+      grdT.addColorStop(0, hex)
+      grdT.addColorStop(1, 'rgba(255,255,255,0)')
+      ctx.strokeStyle = grdT
+      ctx.lineWidth = r * 1.3
+      ctx.lineCap = 'round'
+      ctx.globalAlpha = 0.5
+      ctx.beginPath()
+      ctx.moveTo(x, y)
+      ctx.lineTo(x - nx * len, y - ny * len)
+      ctx.stroke()
+      ctx.globalAlpha = 1
+    }
 
     // soft glow halo
     const grd = ctx.createRadialGradient(x, y, 0, x, y, r * 2.4 * glow)
