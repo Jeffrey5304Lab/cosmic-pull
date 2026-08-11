@@ -248,19 +248,24 @@ export const LEVELS: LevelDef[] = [
     ],
   },
 
-  // 11 ── keystone: release a big pile around a wide lava into an offset cup.
+  // 11 ── keystone: a big pile, a long bridge over a wide lava. The bridge is a
+  //      pin now — pull the blocker, never the bridge.
   {
     id: 11,
     name: 'Keystone',
     world: W,
-    hint: '一根栓卡住一整堆，拔了就傾瀉而下',
-    pins: [{ id: 'a', x: 30, y: 42, len: 22, thick: 3 }],
-    walls: [{ x: 42, y: 74, w: 44, h: 3, angle: 0.6 }],
-    emitters: [{ x: 30, y: 28, w: 18, h: 14, count: 28 }],
+    hint: '一整堆星塵靠那道長橋撐著——只拔上面的栓',
+    pins: [
+      { id: 'hold', x: 30, y: 42, len: 22, thick: 3 },
+      { id: 'bridge', x: 42, y: 74, len: 44, thick: 4, angle: 0.6 },
+    ],
+    walls: [],
+    emitters: [{ x: 30, y: 28, w: 18, h: 14, count: 26 }],
     cups: [{ id: 'c', x: 76, y: 122, w: 22, h: 20, need: 15 }],
     hazards: [{ x: 28, y: 122, w: 34, h: 10, kind: 'lava' }],
     stars: { pulls: [1, 1] },
-    solution: [{ pin: 'a', atMs: 200 }],
+    solution: [{ pin: 'hold', atMs: 200 }],
+    traps: ['bridge'],
   },
 
   // 12 ── colour match with a central void punishing spill.
