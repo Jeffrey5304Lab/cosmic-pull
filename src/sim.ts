@@ -114,7 +114,9 @@ export class GameSim {
     const b = Bodies.rectangle(pd.x * SCALE, pd.y * SCALE, pd.len * SCALE, pd.thick * SCALE, {
       isStatic: true,
       angle: pd.angle ?? 0,
-      friction: 0.5,
+      // low-ish so a slanted "bridge" pin actually routes grains instead of
+      // letting them jam into a stuck heap (flat blocker pins still hold fine)
+      friction: 0.3,
       restitution: 0.05,
     })
     b.collisionFilter = { group: 0, category: CAT.pin, mask: CAT.grain }

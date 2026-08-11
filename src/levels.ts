@@ -12,79 +12,85 @@ import type { LevelDef } from './types.ts'
 const W = { w: 100, h: 150 }
 
 export const LEVELS: LevelDef[] = [
-  // 1 ── the very first pull: nothing to do but tap.
+  // 1 ── teach the basic act: one blocker pin, no danger, just enough stardust.
   {
     id: 1,
     name: 'First Pull',
     world: W,
-    hint: '點一下木栓，把它拔出來 ✦',
-    pins: [{ id: 'a', x: 50, y: 40, len: 30, thick: 3 }],
+    hint: '點木栓把它拔掉 ✦ 讓星塵倒進杯子',
+    pins: [{ id: 'a', x: 50, y: 44, len: 30, thick: 3 }],
     walls: [],
-    emitters: [{ x: 50, y: 26, w: 24, h: 14, count: 26 }],
-    cups: [{ id: 'c', x: 50, y: 120, w: 34, h: 22, need: 18 }],
+    emitters: [{ x: 50, y: 30, w: 20, h: 12, count: 18 }],
+    cups: [{ id: 'c', x: 50, y: 122, w: 28, h: 22, need: 15 }],
     hazards: [],
     stars: { pulls: [1, 1] },
     solution: [{ pin: 'a', atMs: 200 }],
   },
 
-  // 2 ── a funnel: guide walls squeeze the pour into a narrower cup.
+  // 2 ── teach the danger: a lava pool, but a FIXED ramp routes you safely past.
   {
     id: 2,
-    name: 'Funnel',
-    world: W,
-    hint: '星塵會順著斜牆滑進杯子',
-    pins: [{ id: 'a', x: 50, y: 34, len: 30, thick: 3 }],
-    walls: [
-      { x: 30, y: 70, w: 34, h: 3, angle: 0.5 },
-      { x: 70, y: 70, w: 34, h: 3, angle: -0.5 },
-    ],
-    emitters: [{ x: 50, y: 22, w: 24, h: 12, count: 26 }],
-    cups: [{ id: 'c', x: 50, y: 124, w: 24, h: 20, need: 18 }],
-    hazards: [],
-    stars: { pulls: [1, 1] },
-    solution: [{ pin: 'a', atMs: 200 }],
-  },
-
-  // 3 ── first hazard: a lava pool you must pour *around*.
-  {
-    id: 3,
     name: 'Mind the Lava',
     world: W,
-    hint: '碰到岩漿的星塵會被燒掉——別浪費！',
-    pins: [{ id: 'a', x: 32, y: 40, len: 22, thick: 3 }],
-    walls: [{ x: 40, y: 74, w: 40, h: 3, angle: 0.62 }],
-    emitters: [{ x: 32, y: 28, w: 18, h: 12, count: 24 }],
-    cups: [{ id: 'c', x: 74, y: 122, w: 22, h: 20, need: 15 }],
-    hazards: [{ x: 30, y: 122, w: 34, h: 10, kind: 'lava' }],
+    hint: '星塵滑下斜坡、繞過岩漿，流進杯子',
+    pins: [{ id: 'a', x: 30, y: 42, len: 22, thick: 3 }],
+    walls: [{ x: 42, y: 74, w: 44, h: 3, angle: 0.6 }],
+    emitters: [{ x: 30, y: 28, w: 18, h: 14, count: 22 }],
+    cups: [{ id: 'c', x: 76, y: 122, w: 22, h: 20, need: 15 }],
+    hazards: [{ x: 28, y: 122, w: 34, h: 10, kind: 'lava' }],
     stars: { pulls: [1, 1] },
     solution: [{ pin: 'a', atMs: 200 }],
   },
 
-  // 4 ── two cups, two pins: fill them both.
+  // 3 ── THE core idea: the ramp is now a PIN. Pull it and the path collapses
+  //      into the lava. Only pull the blocker on top.
+  {
+    id: 3,
+    name: "Don't Pull the Bridge",
+    world: W,
+    hint: '斜的木栓是「橋」！撐住去路——別拔它，只拔上面那根',
+    pins: [
+      { id: 'hold', x: 30, y: 42, len: 22, thick: 3 },
+      { id: 'bridge', x: 42, y: 74, len: 44, thick: 4, angle: 0.6 },
+    ],
+    walls: [],
+    emitters: [{ x: 30, y: 28, w: 18, h: 14, count: 22 }],
+    cups: [{ id: 'c', x: 76, y: 122, w: 22, h: 20, need: 15 }],
+    hazards: [{ x: 28, y: 122, w: 34, h: 10, kind: 'lava' }],
+    stars: { pulls: [1, 1] },
+    solution: [{ pin: 'hold', atMs: 200 }],
+    traps: ['bridge'],
+  },
+
+  // 4 ── read the board: two bridges funnel inward to one cup. Pull either
+  //      bridge and that whole stream is lost to the lava — you can't recover.
   {
     id: 4,
-    name: 'Split',
+    name: 'Which Ones?',
     world: W,
-    hint: '兩個杯子都要裝滿才能過關',
+    hint: '兩根斜的都是橋，把星塵送到中間。只拔上面兩根！',
     pins: [
-      { id: 'l', x: 26, y: 40, len: 16, thick: 3 },
-      { id: 'r', x: 74, y: 40, len: 16, thick: 3 },
+      { id: 'hl', x: 24, y: 44, len: 16, thick: 3 },
+      { id: 'hr', x: 76, y: 44, len: 16, thick: 3 },
+      { id: 'bl', x: 30, y: 76, len: 36, thick: 4, angle: 0.6 },
+      { id: 'br', x: 70, y: 76, len: 36, thick: 4, angle: -0.6 },
     ],
-    walls: [{ x: 50, y: 66, w: 3, h: 44 }],
+    walls: [],
     emitters: [
-      { x: 26, y: 28, w: 12, h: 12, count: 16 },
-      { x: 74, y: 28, w: 12, h: 12, count: 16 },
+      { x: 24, y: 30, w: 14, h: 12, count: 20 },
+      { x: 76, y: 30, w: 14, h: 12, count: 20 },
     ],
-    cups: [
-      { id: 'cl', x: 26, y: 122, w: 24, h: 22, need: 10 },
-      { id: 'cr', x: 74, y: 122, w: 24, h: 22, need: 10 },
+    cups: [{ id: 'c', x: 50, y: 128, w: 28, h: 20, need: 22 }],
+    hazards: [
+      { x: 12, y: 124, w: 20, h: 10, kind: 'lava' },
+      { x: 88, y: 124, w: 20, h: 10, kind: 'lava' },
     ],
-    hazards: [],
     stars: { pulls: [2, 2] },
     solution: [
-      { pin: 'l', atMs: 200 },
-      { pin: 'r', atMs: 400 },
+      { pin: 'hl', atMs: 200 },
+      { pin: 'hr', atMs: 400 },
     ],
+    traps: ['bl', 'br'],
   },
 
   // 5 ── order matters: pull the drain plug before the flood.

@@ -93,6 +93,12 @@ export interface LevelDef {
    * winnable, and it documents each level's "aha".
    */
   solution?: { pin: string; atMs: number }[]
+  /**
+   * "Trap" pins — support ramps/ledges that must NOT be pulled. The test suite
+   * asserts that pulling one makes the level unwinnable, guaranteeing the puzzle
+   * has real teeth (a wrong choice actually fails you).
+   */
+  traps?: string[]
 }
 
 export type SimStatus = 'playing' | 'won' | 'lost'
