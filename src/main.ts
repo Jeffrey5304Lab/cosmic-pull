@@ -6,6 +6,7 @@ import { Particles } from './particles.ts'
 import { LEVELS, LEVEL_COUNT, getLevel } from './levels.ts'
 import { computeStars } from './logic.ts'
 import { loadProgress, recordWin, saveProgress, totalStars, type Progress } from './storage.ts'
+import { shareResult } from './sharecard.ts'
 import * as audio from './audio.ts'
 import * as haptics from './haptics.ts'
 
@@ -169,7 +170,9 @@ function checkResolution(): void {
 }
 
 // ── overlays ──────────────────────────────────────────────────
+let lastStars = 3
 function showWin(stars: number): void {
+  lastStars = stars
   el.winStars.innerHTML = [1, 2, 3].map((i) => `<span class="${i <= stars ? '' : 'dim'}">★</span>`).join(' ')
   el.winTitle.textContent =
     stars === 3 ? 'Perfect pour!' : stars === 2 ? 'Nicely done!' : 'Cleared!'
@@ -230,6 +233,9 @@ $('btn-menu').addEventListener('click', openMenu)
 $('menu-close').addEventListener('click', () => el.menu.classList.add('hidden'))
 $('btn-restart').addEventListener('click', () => loadLevel(currentId))
 $('win-replay').addEventListener('click', () => loadLevel(currentId))
+$('win-share').addEventListener('click', () => {
+  void shareResult(sim.level, lastStars)
+})
 $('lose-retry').addEventListener('click', () => loadLevel(currentId))
 $('win-next').addEventListener('click', () => {
   if (currentId >= LEVEL_COUNT) openMenu()

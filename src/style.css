@@ -234,6 +234,18 @@ body {
   color: var(--gold);
   height: 12px;
 }
+.share-btn {
+  margin-top: 12px;
+  background: #fff8ec;
+  font-size: 17px;
+}
+.more-games {
+  display: inline-block;
+  margin: 4px 0 14px;
+  color: var(--gold-deep);
+  text-decoration: none;
+  font-size: 18px;
+}
 .hidden {
   display: none !important;
 }
