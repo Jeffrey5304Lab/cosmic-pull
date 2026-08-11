@@ -63,7 +63,8 @@ export class Renderer {
     this.drawBackground(timeMs)
     for (const h of sim.hazardViews) this.drawHazard(h.def.kind, h.x, h.def.y, h.def.w, h.def.h, timeMs)
     for (const w of sim.level.walls) this.drawWall(w.x, w.y, w.w, w.h, w.angle ?? 0)
-    for (const c of sim.cupViews) this.drawCup(c.def.x, c.def.y, c.def.w, c.def.h, c.ratio, c.def.color, timeMs)
+    for (const c of sim.cupViews)
+      this.drawCup(c.def.x, c.def.y, c.def.w, c.def.h, c.ratio, c.def.color, timeMs, c.def.need - c.filled)
     for (const g of sim.grainViews) this.drawGrain(g.x, g.y, g.r, g.color, timeMs)
     for (const p of sim.pinViews) this.drawPin(p.x, p.y, p.len, p.thick, p.angle, p.id === pullable, timeMs)
 
@@ -258,7 +259,7 @@ export class Renderer {
   }
 
   // ── cups ────────────────────────────────────────────────────
-  private drawCup(x: number, y: number, w: number, h: number, ratio: number, color: StardustColor | undefined, timeMs: number): void {
+  private drawCup(x: number, y: number, w: number, h: number, ratio: number, color: StardustColor | undefined, timeMs: number, remaining: number): void {
     const ctx = this.ctx
     const left = x - w / 2
     const top = y - h / 2
@@ -312,8 +313,8 @@ export class Renderer {
     ctx.stroke()
     ctx.globalAlpha = 1
 
-    // full check-mark badge
     if (ratio >= 1) {
+      // full check-mark badge
       ctx.save()
       ctx.translate(x, top - 2.5)
       ctx.beginPath()
@@ -328,6 +329,15 @@ export class Renderer {
       ctx.lineTo(-0.2, 0.9)
       ctx.lineTo(1.2, -0.9)
       ctx.stroke()
+      ctx.restore()
+    } else {
+      // goal badge: how many more grains this cup still needs (legible target)
+      ctx.save()
+      ctx.font = `${Math.min(h * 0.5, 6)}px 'Comic Sans MS', system-ui, sans-serif`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillStyle = 'rgba(43,38,32,0.28)'
+      ctx.fillText(String(Math.max(0, remaining)), x, top - 3.2)
       ctx.restore()
     }
   }

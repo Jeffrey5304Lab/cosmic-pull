@@ -111,12 +111,14 @@ export class GameSim {
   }
 
   private addPin(pd: PinDef): void {
+    const angle = pd.angle ?? 0
     const b = Bodies.rectangle(pd.x * SCALE, pd.y * SCALE, pd.len * SCALE, pd.thick * SCALE, {
       isStatic: true,
-      angle: pd.angle ?? 0,
-      // low-ish so a slanted "bridge" pin actually routes grains instead of
-      // letting them jam into a stuck heap (flat blocker pins still hold fine)
-      friction: 0.3,
+      angle,
+      // Horizontal "blocker" pins need grip so the resting pile never leaks off
+      // before you pull; slanted "bridge" pins need low friction so grains slide
+      // down them cleanly instead of jamming into a stuck heap.
+      friction: Math.abs(angle) < 0.15 ? 0.6 : 0.3,
       restitution: 0.05,
     })
     b.collisionFilter = { group: 0, category: CAT.pin, mask: CAT.grain }
@@ -287,7 +289,9 @@ export class GameSim {
       if (this.settleHoldMs > 250) this.status = 'won'
       return
     }
-    if (remaining > this.grains.length) this.status = 'lost'
+    // Never lose before the first pull — the player should be free to study the
+    // board without a stray settling grain failing the level for them.
+    if (this.pulls > 0 && remaining > this.grains.length) this.status = 'lost'
   }
 
   private removeGrain(g: Grain): boolean {
