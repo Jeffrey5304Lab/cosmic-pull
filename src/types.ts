@@ -96,3 +96,9 @@ export interface LevelDef {
 }
 
 export type SimStatus = 'playing' | 'won' | 'lost'
+
+/** Presentation FX cue emitted by the sim (all coords in WORLD units). */
+export type SimEvent =
+  | { type: 'collect'; x: number; y: number; color: StardustColor }
+  | { type: 'waste'; x: number; y: number; kind: HazardKind }
+  | { type: 'pull'; x: number; y: number; angle: number }

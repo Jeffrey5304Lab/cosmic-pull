@@ -1,6 +1,6 @@
 import Matter from 'matter-js'
 import { PHYS } from './config.ts'
-import type { CupDef, HazardDef, LevelDef, PinDef, SimStatus, StardustColor } from './types.ts'
+import type { CupDef, HazardDef, LevelDef, PinDef, SimEvent, SimStatus, StardustColor } from './types.ts'
 
 const { Engine, World, Bodies, Body, Composite, Events } = Matter
 
@@ -52,12 +52,18 @@ export class GameSim {
   wasted = 0
   private settleHoldMs = 0
 
+  /**
+   * FX events (WORLD units) accumulated since the last `drainEvents()`. The
+   * renderer/particle layer reads these; the sim itself stays presentation-free.
+   */
+  events: SimEvent[] = []
+
   private pins = new Map<string, Matter.Body>()
   private grains: Grain[] = []
   private cups: CupRuntime[] = []
   private hazards: HazardRuntime[] = []
   private toCollect: { grain: Grain; cup: CupRuntime }[] = []
-  private toWaste = new Set<Matter.Body>()
+  private toWaste = new Map<Matter.Body, HazardDef['kind']>()
 
   constructor(level: LevelDef) {
     this.level = level
@@ -216,7 +222,8 @@ export class GameSim {
       if (cup.def.color && cup.def.color !== grain.color) return // wrong colour: reject
       this.toCollect.push({ grain, cup })
     } else if (other.label === 'hazard') {
-      this.toWaste.add(grainBody)
+      const hz = this.hazards.find((h) => h.sensor === other)
+      this.toWaste.set(grainBody, hz?.def.kind ?? 'lava')
     }
   }
 
@@ -237,12 +244,23 @@ export class GameSim {
     Engine.update(this.engine, dtMs)
 
     for (const { grain, cup } of this.toCollect) {
-      if (this.removeGrain(grain)) cup.filled++
+      const x = grain.body.position.x / SCALE
+      const y = grain.body.position.y / SCALE
+      if (this.removeGrain(grain)) {
+        cup.filled++
+        this.events.push({ type: 'collect', x, y, color: grain.color })
+      }
     }
     this.toCollect.length = 0
-    for (const body of this.toWaste) {
+    for (const [body, kind] of this.toWaste) {
       const g = this.grains.find((gg) => gg.body === body)
-      if (g && this.removeGrain(g)) this.wasted++
+      if (!g) continue
+      const x = g.body.position.x / SCALE
+      const y = g.body.position.y / SCALE
+      if (this.removeGrain(g)) {
+        this.wasted++
+        this.events.push({ type: 'waste', x, y, kind })
+      }
     }
     this.toWaste.clear()
 
@@ -285,7 +303,20 @@ export class GameSim {
     this.pins.delete(id)
     World.remove(this.engine.world, body)
     this.pulls++
+    this.events.push({
+      type: 'pull',
+      x: body.position.x / SCALE,
+      y: body.position.y / SCALE,
+      angle: body.angle,
+    })
     return true
+  }
+
+  /** Take and clear the FX events accumulated since the last call. */
+  drainEvents(): SimEvent[] {
+    const e = this.events
+    this.events = []
+    return e
   }
 
   /** Nearest pull-able pin within `maxDist` WORLD units of a point, or null. */

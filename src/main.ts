@@ -2,6 +2,7 @@ import './style.css'
 import { PHYS } from './config.ts'
 import { GameSim } from './sim.ts'
 import { Renderer } from './render.ts'
+import { Particles } from './particles.ts'
 import { LEVELS, LEVEL_COUNT, getLevel } from './levels.ts'
 import { computeStars } from './logic.ts'
 import { loadProgress, recordWin, saveProgress, totalStars, type Progress } from './storage.ts'
@@ -13,6 +14,7 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getEleme
 const canvas = $<HTMLCanvasElement>('game')
 const ctx = canvas.getContext('2d')!
 const renderer = new Renderer(ctx)
+const particles = new Particles()
 
 const el = {
   levelName: $('level-name'),
@@ -38,6 +40,7 @@ let resolved = false // win/lose already handled for this attempt
 let hoverPin: string | null = null
 let lastFilled = 0
 let dripCooldown = 0
+let shake = 0 // screenshake magnitude (world units), decays each frame
 
 audio.setMuted(progress.muted)
 updateSoundBtn()
@@ -48,9 +51,11 @@ function loadLevel(id: number): void {
   if (!level) return
   currentId = id
   sim = new GameSim(level)
+  particles.clear()
   resolved = false
   acc = 0
   lastFilled = 0
+  shake = 0
   hoverPin = null
   el.levelName.textContent = `${id}. ${level.name}`
   updatePullCount()
@@ -105,8 +110,18 @@ function frame(now: number): void {
       sim.step(PHYS.stepMs)
       acc -= PHYS.stepMs
     }
-    checkResolution()
   }
+
+  // turn sim FX cues into particles (also drives the "waste = small shake")
+  for (const ev of sim.drainEvents()) {
+    particles.emit(ev)
+    if (ev.type === 'waste') shake = Math.min(shake + 0.5, 2)
+    if (ev.type === 'pull') shake = Math.min(shake + 0.35, 2)
+  }
+  particles.update(dt)
+  shake *= Math.pow(0.001, dt / 1000) // smooth exponential decay
+
+  if (!resolved) checkResolution()
 
   // audio feedback when a cup gains stardust
   const filled = sim.cupViews.reduce((s, c) => s + c.filled, 0)
@@ -120,7 +135,17 @@ function frame(now: number): void {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, rect.width, rect.height)
   const t = renderer.transformFor(rect.width, rect.height)
+  if (shake > 0.01) {
+    t.ox += (Math.random() - 0.5) * shake * t.scale
+    t.oy += (Math.random() - 0.5) * shake * t.scale
+  }
   renderer.draw(sim, t, now, resolved ? null : hoverPin)
+  // particles share the world transform, drawn on top
+  ctx.save()
+  ctx.translate(t.ox, t.oy)
+  ctx.scale(t.scale, t.scale)
+  particles.draw(ctx)
+  ctx.restore()
 
   requestAnimationFrame(frame)
 }
@@ -132,6 +157,8 @@ function checkResolution(): void {
     progress = recordWin(progress, currentId, stars, LEVEL_COUNT)
     audio.sfxWin()
     haptics.notifyWin()
+    shake = 1.6
+    for (const c of sim.cupViews) particles.celebrate(c.def.x, c.def.y - c.def.h / 2)
     setTimeout(() => showWin(stars), 550)
   } else if (sim.status === 'lost') {
     resolved = true
