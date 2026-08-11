@@ -19,6 +19,18 @@ function color(c: StardustColor | undefined): string {
   return c === 'rose' ? PALETTE.rose : c === 'aqua' ? PALETTE.aqua : PALETTE.gold
 }
 
+/** A small 4-point sparkle star (8-point path) for stardust grains. */
+function star4(cx: number, cy: number, R: number, fill: string): string {
+  const r = R * 0.36
+  const pts: string[] = []
+  for (let k = 0; k < 8; k++) {
+    const ang = (k / 8) * Math.PI * 2 - Math.PI / 2
+    const rad = k % 2 === 0 ? R : r
+    pts.push(`${(cx + Math.cos(ang) * rad).toFixed(1)},${(cy + Math.sin(ang) * rad).toFixed(1)}`)
+  }
+  return `<polygon points="${pts.join(' ')}" fill="${fill}"/>`
+}
+
 function cell(lv: LevelDef, ox: number, oy: number): string {
   const s = (CW - PAD * 2) / lv.world.w // world→cell scale
   const X = (x: number) => ox + PAD + x * s
@@ -32,6 +44,20 @@ function cell(lv: LevelDef, ox: number, oy: number): string {
   parts.push(
     `<text x="${ox + CW / 2}" y="${oy + 22}" text-anchor="middle" font-family="'Comic Sans MS',sans-serif" font-size="15" fill="${PALETTE.goldDeep}">${lv.id}. ${lv.name}</text>`,
   )
+
+  // faint ringed planet + scattered stars in the sky (cosmic backdrop)
+  const px = X(74)
+  const py = Y(26)
+  const pr = 14 * s
+  parts.push(
+    `<g opacity="0.13"><circle cx="${px}" cy="${py}" r="${pr}" fill="${PALETTE.gold}"/>` +
+      `<ellipse cx="${px}" cy="${py}" rx="${pr * 1.7}" ry="${pr * 0.5}" fill="none" stroke="${PALETTE.goldDeep}" stroke-width="1.4" transform="rotate(-23 ${px} ${py})"/></g>`,
+  )
+  for (let k = 0; k < 10; k++) {
+    const sx = X(6 + ((k * 53) % 90))
+    const sy = Y(8 + ((k * 37) % 40))
+    parts.push(`<circle cx="${sx}" cy="${sy}" r="1" fill="${PALETTE.goldDeep}" opacity="0.3"/>`)
+  }
 
   // hazards
   for (const h of lv.hazards) {
@@ -71,19 +97,19 @@ function cell(lv: LevelDef, ox: number, oy: number): string {
     )
   }
 
-  // stardust piles (mirror the sim's deterministic grid)
+  // stardust piles rendered as little 4-point stars (mirror the sim's grid)
   for (const em of lv.emitters) {
     const r = 1.5
     const perRow = Math.max(1, Math.floor(em.w / (r * 2.1)))
-    const dots: string[] = []
+    const stars: string[] = []
     for (let i = 0; i < em.count; i++) {
       const col = i % perRow
       const row = Math.floor(i / perRow)
       const x = em.x - em.w / 2 + r + col * (r * 2.1)
       const y = em.y - em.h / 2 + r + row * (r * 2.05)
-      dots.push(`<circle cx="${X(x)}" cy="${Y(y)}" r="${r * s * 0.9}" fill="${color(em.color)}"/>`)
+      stars.push(star4(X(x), Y(y), r * s * 1.5, color(em.color)))
     }
-    parts.push(dots.join(''))
+    parts.push(stars.join(''))
   }
 
   // pins (wood bar + gold knob)

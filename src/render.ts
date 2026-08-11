@@ -15,6 +15,9 @@ export interface Transform {
 
 export class Renderer {
   private stars: { x: number; y: number; r: number; a: number }[] = []
+  private constellations: { x: number; y: number }[][] = []
+  /** faint background planet (ties into the Cosmic Merge universe) */
+  private planet = { x: 74, y: 30, r: 14 }
 
   constructor(private ctx: CanvasRenderingContext2D) {
     // deterministic starfield in world space
@@ -23,6 +26,26 @@ export class Renderer {
     for (let i = 0; i < 60; i++) {
       this.stars.push({ x: rnd() * WORLD.w, y: rnd() * WORLD.h, r: 0.3 + rnd() * 0.9, a: 0.15 + rnd() * 0.5 })
     }
+    // a couple of hand-placed constellations (connected star doodles)
+    this.constellations = [
+      [
+        { x: 12, y: 18 },
+        { x: 20, y: 26 },
+        { x: 26, y: 20 },
+        { x: 33, y: 30 },
+      ],
+      [
+        { x: 82, y: 96 },
+        { x: 88, y: 104 },
+        { x: 80, y: 110 },
+        { x: 90, y: 116 },
+      ],
+      [
+        { x: 10, y: 118 },
+        { x: 16, y: 126 },
+        { x: 22, y: 120 },
+      ],
+    ]
   }
 
   /** Fit the world into the canvas pixel box, centred, preserving aspect. */
@@ -55,6 +78,28 @@ export class Renderer {
     g.addColorStop(1, '#EBDCC2')
     ctx.fillStyle = g
     ctx.fillRect(0, 0, WORLD.w, WORLD.h)
+
+    // faint ringed planet in the sky (cozy nod to Cosmic Merge)
+    this.drawBgPlanet(timeMs)
+
+    // constellations: connected star doodles with a soft ink line
+    ctx.strokeStyle = PALETTE.goldDeep
+    ctx.lineWidth = 0.25
+    for (const c of this.constellations) {
+      ctx.globalAlpha = 0.22
+      ctx.beginPath()
+      c.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)))
+      ctx.stroke()
+      ctx.globalAlpha = 0.4
+      ctx.fillStyle = PALETTE.goldDeep
+      for (const p of c) {
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, 0.7, 0, Math.PI * 2)
+        ctx.fill()
+      }
+    }
+
+    // twinkling background stars
     for (const s of this.stars) {
       const tw = 0.6 + 0.4 * Math.sin(timeMs / 600 + s.x)
       ctx.globalAlpha = s.a * tw
@@ -64,6 +109,28 @@ export class Renderer {
       ctx.fill()
     }
     ctx.globalAlpha = 1
+  }
+
+  private drawBgPlanet(timeMs: number): void {
+    const ctx = this.ctx
+    const { x, y, r } = this.planet
+    ctx.save()
+    ctx.globalAlpha = 0.14
+    // body
+    const grd = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.2, x, y, r)
+    grd.addColorStop(0, PALETTE.gold)
+    grd.addColorStop(1, PALETTE.goldDeep)
+    ctx.fillStyle = grd
+    ctx.beginPath()
+    ctx.arc(x, y, r, 0, Math.PI * 2)
+    ctx.fill()
+    // ring
+    ctx.strokeStyle = PALETTE.goldDeep
+    ctx.lineWidth = 1.1
+    ctx.beginPath()
+    ctx.ellipse(x, y, r * 1.7, r * 0.5, -0.4 + Math.sin(timeMs / 4000) * 0.03, 0, Math.PI * 2)
+    ctx.stroke()
+    ctx.restore()
   }
 
   // ── walls ───────────────────────────────────────────────────
@@ -149,26 +216,45 @@ export class Renderer {
   private drawGrain(x: number, y: number, r: number, color: StardustColor, timeMs: number): void {
     const ctx = this.ctx
     const hex = grainHex(color)
-    const glow = 1 + 0.15 * Math.sin(timeMs / 200 + x + y)
-    const grd = ctx.createRadialGradient(x, y, 0, x, y, r * 2.2 * glow)
+    const tw = 0.8 + 0.2 * Math.sin(timeMs / 170 + x * 1.3 + y) // per-grain twinkle
+    const glow = 1 + 0.18 * Math.sin(timeMs / 200 + x + y)
+
+    // soft glow halo
+    const grd = ctx.createRadialGradient(x, y, 0, x, y, r * 2.4 * glow)
     grd.addColorStop(0, hex)
     grd.addColorStop(0.5, hex)
     grd.addColorStop(1, 'rgba(255,255,255,0)')
-    ctx.globalAlpha = 0.55
+    ctx.globalAlpha = 0.5
     ctx.fillStyle = grd
     ctx.beginPath()
-    ctx.arc(x, y, r * 2.2 * glow, 0, Math.PI * 2)
+    ctx.arc(x, y, r * 2.4 * glow, 0, Math.PI * 2)
     ctx.fill()
     ctx.globalAlpha = 1
+
+    // star core
     ctx.beginPath()
-    ctx.arc(x, y, r, 0, Math.PI * 2)
+    ctx.arc(x, y, r * 0.92, 0, Math.PI * 2)
     ctx.fillStyle = hex
     ctx.fill()
-    // tiny sparkle highlight
+
+    // 4-point sparkle cross — makes each grain read as a little star, not a ball
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.rotate(timeMs / 3000 + x)
+    ctx.fillStyle = 'rgba(255,255,255,0.9)'
+    const s = r * 1.7 * tw
     ctx.beginPath()
-    ctx.arc(x - r * 0.3, y - r * 0.3, r * 0.35, 0, Math.PI * 2)
-    ctx.fillStyle = 'rgba(255,255,255,0.85)'
+    ctx.moveTo(0, -s)
+    ctx.quadraticCurveTo(0, 0, s, 0)
+    ctx.quadraticCurveTo(0, 0, 0, s)
+    ctx.quadraticCurveTo(0, 0, -s, 0)
+    ctx.quadraticCurveTo(0, 0, 0, -s)
     ctx.fill()
+    // bright center dot
+    ctx.beginPath()
+    ctx.arc(0, 0, r * 0.3, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.restore()
   }
 
   // ── cups ────────────────────────────────────────────────────
