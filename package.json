@@ -1,0 +1,34 @@
+{
+  "name": "cosmic-pull",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:release": "tsc && vite build --mode release",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "cap:sync": "npm run build && cap sync",
+    "cap:ios": "npm run build && cap sync ios && cap open ios",
+    "cap:ios:release": "npm run build:release && cap sync ios && cap open ios",
+    "cap:android": "npm run build && cap sync android && cap open android",
+    "cap:android:release": "npm run build:release && cap sync android && cap open android"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.6.7",
+    "@types/matter-js": "^0.20.2",
+    "typescript": "~5.6.2",
+    "vite": "^5.4.21",
+    "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "@capacitor-community/admob": "^7.2.0",
+    "@capacitor/android": "^7.6.7",
+    "@capacitor/core": "^7.6.7",
+    "@capacitor/haptics": "^7.0.5",
+    "@capacitor/ios": "^7.6.7",
+    "matter-js": "^0.20.0"
+  }
+}
