@@ -140,7 +140,9 @@ function frame(now: number): void {
     t.ox += (Math.random() - 0.5) * shake * t.scale
     t.oy += (Math.random() - 0.5) * shake * t.scale
   }
-  renderer.draw(sim, t, now, resolved ? null : hoverPin)
+  // gentle onboarding: point at the pin on level 1 until the first pull
+  const coach = currentId === 1 && sim.pulls === 0 && !resolved ? (sim.pinViews[0]?.id ?? null) : null
+  renderer.draw(sim, t, now, resolved ? null : hoverPin, coach)
   // particles share the world transform, drawn on top
   ctx.save()
   ctx.translate(t.ox, t.oy)

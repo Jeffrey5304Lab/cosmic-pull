@@ -54,7 +54,7 @@ export class Renderer {
     return { scale, ox: (cw - WORLD.w * scale) / 2, oy: (ch - WORLD.h * scale) / 2 }
   }
 
-  draw(sim: GameSim, t: Transform, timeMs: number, pullable: string | null): void {
+  draw(sim: GameSim, t: Transform, timeMs: number, pullable: string | null, coachPin: string | null = null): void {
     const ctx = this.ctx
     ctx.save()
     ctx.translate(t.ox, t.oy)
@@ -68,6 +68,32 @@ export class Renderer {
     for (const g of sim.grainViews) this.drawGrain(g.x, g.y, g.vx, g.vy, g.r, g.color, timeMs)
     for (const p of sim.pinViews) this.drawPin(p.x, p.y, p.len, p.thick, p.angle, p.id === pullable, timeMs)
 
+    if (coachPin) {
+      const p = sim.pinViews.find((v) => v.id === coachPin)
+      if (p) this.drawCoach(p.x, p.y - p.thick, timeMs)
+    }
+
+    ctx.restore()
+  }
+
+  /** A bobbing "tap here" hand pointing down at a pin (first-level onboarding). */
+  private drawCoach(x: number, y: number, timeMs: number): void {
+    const ctx = this.ctx
+    const bob = Math.abs(Math.sin(timeMs / 350)) * 4
+    const ty = y - 10 - bob
+    ctx.save()
+    ctx.globalAlpha = 0.9
+    // downward arrow
+    ctx.fillStyle = PALETTE.ink
+    ctx.beginPath()
+    ctx.moveTo(x, ty + 7)
+    ctx.lineTo(x - 3, ty + 1)
+    ctx.lineTo(x + 3, ty + 1)
+    ctx.closePath()
+    ctx.fill()
+    ctx.beginPath()
+    roundRect(ctx, x - 1.2, ty - 6, 2.4, 7, 1.2)
+    ctx.fill()
     ctx.restore()
   }
 
