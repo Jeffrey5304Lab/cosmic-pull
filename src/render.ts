@@ -98,16 +98,19 @@ export class Renderer {
     ctx.translate(x, y)
     ctx.rotate(angle + wob)
 
-    if (hot) {
-      // pull-me pulse ring
-      const pr = 1 + 0.12 * (0.5 + 0.5 * Math.sin(timeMs / 180))
-      ctx.globalAlpha = 0.35
-      roundRect(ctx, -len / 2 - 1.5, -thick / 2 - 1.5, len + 3, thick + 3, thick)
+    {
+      // "pull me" pulse ring — always gently breathing (reads on touch, which
+      // has no hover state), brighter when the finger is over it.
+      const pulse = 0.5 + 0.5 * Math.sin(timeMs / (hot ? 180 : 500))
+      const pr = 1 + (hot ? 0.12 : 0.06) * pulse
+      ctx.save()
+      ctx.globalAlpha = hot ? 0.4 : 0.16 + 0.08 * pulse
       ctx.scale(pr, pr)
+      roundRect(ctx, -len / 2 - 1.5, -thick / 2 - 1.5, len + 3, thick + 3, thick)
       ctx.strokeStyle = PALETTE.gold
-      ctx.lineWidth = 1.2
+      ctx.lineWidth = hot ? 1.3 : 0.9
       ctx.stroke()
-      ctx.globalAlpha = 1
+      ctx.restore()
     }
 
     // wood body

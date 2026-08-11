@@ -356,12 +356,12 @@ export const LEVELS: LevelDef[] = [
     ],
   },
 
-  // 16 ── grand finale: two colours, moving void, tight budget.
+  // 16 ── two colours across a drifting void.
   {
     id: 16,
-    name: 'Stardust Finale',
+    name: 'Void Crossing',
     world: W,
-    hint: '所有技巧的總結——祝好運 ✦',
+    hint: '兩種顏色，中間有游走的黑洞',
     pins: [
       { id: 'g', x: 22, y: 40, len: 16, thick: 3 },
       { id: 'a', x: 78, y: 40, len: 16, thick: 3 },
@@ -379,6 +379,118 @@ export const LEVELS: LevelDef[] = [
       { id: 'ca', x: 78, y: 122, w: 24, h: 22, need: 8, color: 'aqua' },
     ],
     hazards: [{ x: 50, y: 104, w: 14, h: 8, kind: 'void', moveX: 1.4, moveRange: 14 }],
+    stars: { pulls: [2, 2] },
+    solution: [
+      { pin: 'g', atMs: 200 },
+      { pin: 'a', atMs: 300 },
+    ],
+  },
+
+  // 17 ── three colours, three cups.
+  {
+    id: 17,
+    name: 'Rainbow Row',
+    world: W,
+    hint: '三種顏色，各就各位',
+    pins: [
+      { id: 'l', x: 20, y: 40, len: 13, thick: 3 },
+      { id: 'm', x: 50, y: 40, len: 13, thick: 3 },
+      { id: 'r', x: 80, y: 40, len: 13, thick: 3 },
+    ],
+    walls: [
+      { x: 35, y: 90, w: 3, h: 60 },
+      { x: 65, y: 90, w: 3, h: 60 },
+    ],
+    emitters: [
+      { x: 20, y: 28, w: 11, h: 12, count: 13, color: 'gold' },
+      { x: 50, y: 28, w: 11, h: 12, count: 13, color: 'rose' },
+      { x: 80, y: 28, w: 11, h: 12, count: 13, color: 'aqua' },
+    ],
+    cups: [
+      { id: 'cl', x: 19, y: 126, w: 18, h: 20, need: 7, color: 'gold' },
+      { id: 'cm', x: 50, y: 126, w: 18, h: 20, need: 7, color: 'rose' },
+      { id: 'cr', x: 81, y: 126, w: 18, h: 20, need: 7, color: 'aqua' },
+    ],
+    hazards: [],
+    stars: { pulls: [3, 3] },
+    solution: [
+      { pin: 'l', atMs: 200 },
+      { pin: 'm', atMs: 350 },
+      { pin: 'r', atMs: 500 },
+    ],
+  },
+
+  // 18 ── colour match either side of a lava pool.
+  {
+    id: 18,
+    name: 'Aqua & Gold',
+    world: W,
+    hint: '別讓顏色掉進中間的岩漿',
+    pins: [
+      { id: 'g', x: 24, y: 38, len: 16, thick: 3 },
+      { id: 'a', x: 76, y: 38, len: 16, thick: 3 },
+    ],
+    walls: [
+      { x: 38, y: 112, w: 3, h: 28 },
+      { x: 62, y: 112, w: 3, h: 28 },
+    ],
+    emitters: [
+      { x: 24, y: 26, w: 12, h: 12, count: 15, color: 'gold' },
+      { x: 76, y: 26, w: 12, h: 12, count: 15, color: 'aqua' },
+    ],
+    cups: [
+      { id: 'cg', x: 22, y: 124, w: 24, h: 22, need: 9, color: 'gold' },
+      { id: 'ca', x: 78, y: 124, w: 24, h: 22, need: 9, color: 'aqua' },
+    ],
+    hazards: [{ x: 50, y: 128, w: 18, h: 10, kind: 'lava' }],
+    stars: { pulls: [2, 2] },
+    solution: [
+      { pin: 'g', atMs: 200 },
+      { pin: 'a', atMs: 400 },
+    ],
+  },
+
+  // 19 ── one huge pour: fill the big cup.
+  {
+    id: 19,
+    name: 'Avalanche',
+    world: W,
+    hint: '一次傾瀉——盡量別浪費',
+    pins: [{ id: 'a', x: 50, y: 36, len: 30, thick: 3 }],
+    walls: [
+      { x: 26, y: 70, w: 28, h: 3, angle: 0.5 },
+      { x: 74, y: 70, w: 28, h: 3, angle: -0.5 },
+    ],
+    emitters: [{ x: 50, y: 24, w: 24, h: 14, count: 40 }],
+    cups: [{ id: 'c', x: 50, y: 132, w: 30, h: 16, need: 26 }],
+    hazards: [],
+    stars: { pulls: [1, 1] },
+    solution: [{ pin: 'a', atMs: 200 }],
+  },
+
+  // 20 ── grand finale: two colours, a wider drifting void, tight budget.
+  {
+    id: 20,
+    name: 'Grand Finale',
+    world: W,
+    hint: '把學到的全用上——祝好運 ✦',
+    pins: [
+      { id: 'g', x: 22, y: 40, len: 16, thick: 3 },
+      { id: 'a', x: 78, y: 40, len: 16, thick: 3 },
+    ],
+    walls: [
+      { x: 38, y: 108, w: 3, h: 34 },
+      { x: 62, y: 108, w: 3, h: 34 },
+    ],
+    emitters: [
+      { x: 22, y: 28, w: 12, h: 12, count: 16, color: 'gold' },
+      { x: 78, y: 28, w: 12, h: 12, count: 16, color: 'aqua' },
+    ],
+    cups: [
+      { id: 'cg', x: 22, y: 122, w: 24, h: 22, need: 9, color: 'gold' },
+      { id: 'ca', x: 78, y: 122, w: 24, h: 22, need: 9, color: 'aqua' },
+    ],
+    hazards: [{ x: 50, y: 104, w: 14, h: 8, kind: 'void', moveX: 1.5, moveRange: 16 }],
     stars: { pulls: [2, 2] },
     solution: [
       { pin: 'g', atMs: 200 },
