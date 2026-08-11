@@ -1,0 +1,13 @@
+{
+  "name": "Cosmic Pull",
+  "short_name": "Cosmic Pull",
+  "description": "A cozy hand-drawn pull-the-pin puzzle — pour glowing stardust into every cup.",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4E9D7",
+  "theme_color": "#F4E9D7",
+  "icons": [
+    { "src": "./favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

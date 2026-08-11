@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#F4E9D7" />
+    <title>Cosmic Pull</title>
+    <meta name="description" content="Pull the pins, pour glowing stardust into the cups, dodge the lava. A cozy hand-drawn pull-the-pin puzzle." />
+    <meta property="og:title" content="Cosmic Pull" />
+    <meta property="og:description" content="Cozy pull-the-pin physics puzzle — pour stardust into every cup." />
+    <meta property="og:type" content="website" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="hud">
+        <button id="btn-menu" class="icon-btn" aria-label="Levels">☰</button>
+        <div class="hud-center">
+          <span id="level-name" class="level-name">Cosmic Pull</span>
+          <span id="pull-count" class="pull-count"></span>
+        </div>
+        <button id="btn-sound" class="icon-btn" aria-label="Sound">♪</button>
+        <button id="btn-restart" class="icon-btn" aria-label="Restart">↻</button>
+      </header>
+
+      <div id="stage" class="stage">
+        <canvas id="game"></canvas>
+        <div id="hint" class="hint hidden"></div>
+
+        <!-- Level complete -->
+        <div id="win" class="overlay hidden">
+          <div class="card">
+            <div id="win-stars" class="stars">★ ★ ★</div>
+            <h2 id="win-title">Nice pull!</h2>
+            <div class="card-actions">
+              <button id="win-replay" class="btn ghost">Replay</button>
+              <button id="win-next" class="btn primary">Next ›</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Failed -->
+        <div id="lose" class="overlay hidden">
+          <div class="card">
+            <h2>Out of stardust…</h2>
+            <p class="sub">Not enough made it into the cups.</p>
+            <div class="card-actions">
+              <button id="lose-retry" class="btn primary">Try again</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Level select -->
+        <div id="menu" class="overlay hidden">
+          <div class="card wide">
+            <h2 class="menu-title">Cosmic <span class="accent">Pull</span></h2>
+            <p id="menu-sub" class="sub"></p>
+            <div id="level-grid" class="level-grid"></div>
+            <button id="menu-close" class="btn ghost">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
