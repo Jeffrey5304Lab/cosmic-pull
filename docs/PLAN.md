@@ -54,5 +54,21 @@
 - Info.plist：AdMob App ID、ATT 字串、ITSAppUsesNonExemptEncryption=false、直向鎖定。
 - 免費 App + AdMob（無 Apple IAP）。
 
+## 進度快照（overnight autonomous run，2026-08-12）
+- ✅ Phase 0 Scaffold（TS+Vite+Capacitor+matter-js）
+- ✅ Phase 1 核心物理 + 手繪渲染（可玩 web build）
+- ✅ Phase 2 16 關手工關卡，全部 vitest 驗證可解
+- ✅ Phase 3 juice：粒子 FX（木屑/火花/餘燼/黑洞內縮/星星噴泉）+ 螢幕震動 + 合成音效
+- ✅ Phase 6 送審準備：privacy.html、README、deploy.yml、docs/IOS_SUBMISSION.md、assets/icon.svg
+- 🔜 Phase 4 Meta 加值：每日挑戰、分享卡（選配；核心已完整）
+- 🔜 Phase 5 補測試：render smoke（需 node-canvas，暫略）
+- 待人工：瀏覽器實機試玩（睡醒後開 `npm run dev`）、`npx cap add ios` 產生原生專案
+
+## 關鍵技術筆記（踩過的坑）
+- matter-js collisionFilter 一定要帶 `group: 0`，否則 undefined===undefined 會被當同組而**停用碰撞**。
+- 世界太小會穿透：物理以 6× SCALE 建置，view getter 再換回 world 單位。
+- 杯子在「杯口」就收集顆粒（不等靜止），避免高速穿過薄杯底流失。
+- 重力調到 0.5、顆粒 restitution 0.04 → 療癒慢流、不亂彈出杯。
+
 ## Resume 指引
 每個 Phase 完成就 git commit。此檔為 resume 起點。中斷後讀本檔 + TaskList 即可接續。
