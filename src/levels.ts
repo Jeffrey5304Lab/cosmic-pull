@@ -486,34 +486,26 @@ export const LEVELS: LevelDef[] = [
     solution: [{ pin: 'a', atMs: 200 }],
   },
 
-  // 20 ── grand finale: two colours, a wider drifting void, tight budget.
+  // 20 ── grand finale: a big fountain split, a drifting black hole in the
+  //      middle and lava on the flanks. Land the arcs cleanly. Good luck ✦
   {
     id: 20,
     name: 'Grand Finale',
     world: W,
-    hint: '把學到的全用上——祝好運 ✦',
-    pins: [
-      { id: 'g', x: 22, y: 40, len: 16, thick: 3 },
-      { id: 'a', x: 78, y: 40, len: 16, thick: 3 },
-    ],
+    hint: '大噴泉分流，中間黑洞會移動、兩側是岩漿——穩穩落杯 ✦',
+    pins: [{ id: 'hold', x: 50, y: 28, len: 22, thick: 3 }],
     walls: [
-      { x: 38, y: 108, w: 3, h: 34 },
-      { x: 62, y: 108, w: 3, h: 34 },
+      { x: 43, y: 58, w: 20, h: 3, angle: -0.42 },
+      { x: 57, y: 58, w: 20, h: 3, angle: 0.42 },
     ],
-    emitters: [
-      { x: 22, y: 28, w: 12, h: 12, count: 16, color: 'gold' },
-      { x: 78, y: 28, w: 12, h: 12, count: 16, color: 'aqua' },
-    ],
+    emitters: [{ x: 50, y: 18, w: 18, h: 10, count: 32 }],
     cups: [
-      { id: 'cg', x: 22, y: 122, w: 24, h: 22, need: 9, color: 'gold' },
-      { id: 'ca', x: 78, y: 122, w: 24, h: 22, need: 9, color: 'aqua' },
+      { id: 'cl', x: 24, y: 130, w: 26, h: 20, need: 9 },
+      { id: 'cr', x: 76, y: 130, w: 26, h: 20, need: 9 },
     ],
-    hazards: [{ x: 50, y: 104, w: 14, h: 8, kind: 'void', moveX: 1.5, moveRange: 16 }],
-    stars: { pulls: [2, 2] },
-    solution: [
-      { pin: 'g', atMs: 200 },
-      { pin: 'a', atMs: 300 },
-    ],
+    hazards: [{ x: 50, y: 112, w: 14, h: 8, kind: 'void', moveX: 1.4, moveRange: 12 }],
+    stars: { pulls: [1, 1] },
+    solution: [{ pin: 'hold', atMs: 200 }],
   },
 ]
 
