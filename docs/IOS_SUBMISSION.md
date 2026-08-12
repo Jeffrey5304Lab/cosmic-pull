@@ -79,12 +79,29 @@ to clear the level. There is nothing hidden to unlock for review.
 - [ ] 隱私頁 URL 可開
 - [ ] 版本 1.0 / build 1、Bundle ID 正確
 
-## 7. App 圖示
-- 來源圖：`assets/icon.svg`（1024×1024 概念稿）。轉 PNG 後用：
+## 7. App 圖示（已就緒）
+- **`assets/icon.png`（1024×1024）已產生好**（由 `assets/icon.svg` 渲染）——木栓傾瀉星塵入杯、奶油底。
+- 產生各平台尺寸（iOS/Android 全套）：
   ```bash
-  npx @capacitor/assets generate --iconBackgroundColor '#F4E9D7'
+  cd ~/cosmic-pull
+  npx @capacitor/assets generate --iconBackgroundColor '#F4E9D7' --splashBackgroundColor '#F4E9D7'
   ```
-- 或沿用 Cosmic Merge 的手繪流程，維持同一質感（無 AI 感）。
+  （會讀 `assets/icon.png` 自動輸出到 `ios/`、`android/`。若還沒 `npx cap add ios` 就先加平台。）
+- 要重繪 icon：改 `assets/icon.svg` 後重新渲染成 `icon.png` 即可。
+
+## 8. GitHub repo + Pages（隱私頁需要）
+1. 在 GitHub 建 repo `cosmic-pull`（公開）。
+2. 本機推上去：
+   ```bash
+   cd ~/cosmic-pull
+   git remote add origin https://github.com/jeffrey5304lab/cosmic-pull.git
+   git push -u origin main
+   ```
+3. GitHub → repo → Settings → Pages → Source 選「GitHub Actions」。
+   （`.github/workflows/deploy.yml` 已就緒，push 後會自動 build+部署。）
+4. 幾分鐘後隱私頁會在：
+   `https://jeffrey5304lab.github.io/cosmic-pull/privacy.html`
+   —— 把這個 URL 貼進 App Store Connect 的 Privacy Policy URL。
 
 ## 8. Android（後續）
 - 此 Mac 目前缺 Android SDK（與 Cosmic Merge 同狀況）。待補齊後：
