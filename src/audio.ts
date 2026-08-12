@@ -58,6 +58,13 @@ export function sfxWin(): void {
   notes.forEach((n, i) => setTimeout(() => blip(n, 0.22, 'sine', 0.07), i * 90))
 }
 
+/** Rising chime as each win star pops in (index 0..2). */
+export function sfxStar(index: number): void {
+  const notes = [659, 880, 1175] // E5, A5, D6 — ascending sparkle
+  blip(notes[Math.min(index, 2)], 0.28, 'triangle', 0.08)
+  blip(notes[Math.min(index, 2)] * 2, 0.18, 'sine', 0.03) // shimmer octave
+}
+
 /** Muted thud on fail. */
 export function sfxLose(): void {
   blip(180, 0.3, 'sine', 0.06, 90)

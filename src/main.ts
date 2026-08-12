@@ -169,6 +169,7 @@ function drawVignette(w: number, h: number): void {
 }
 
 function checkResolution(): void {
+  if (sim.status !== 'playing') showHint(undefined) // clear any lingering coaching toast
   if (sim.status === 'won') {
     resolved = true
     const stars = computeStars(sim.level, sim.pulls)
@@ -196,6 +197,14 @@ function showWin(stars: number): void {
   const isLast = currentId >= LEVEL_COUNT
   ;($('win-next') as HTMLButtonElement).textContent = isLast ? 'Menu' : 'Next ›'
   el.win.classList.remove('hidden')
+  // reveal the stars one at a time with a rising chime — the satisfying beat
+  const spans = Array.from(el.winStars.querySelectorAll('span'))
+  spans.forEach((span, i) => {
+    window.setTimeout(() => {
+      span.classList.add('pop')
+      if (i < stars) audio.sfxStar(i)
+    }, 180 + i * 240)
+  })
 }
 
 function openMenu(): void {

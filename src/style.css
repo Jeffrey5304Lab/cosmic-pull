@@ -158,10 +158,28 @@ body {
   font-size: 16px;
 }
 .stars {
-  font-size: 40px;
-  letter-spacing: 6px;
+  font-size: 44px;
+  letter-spacing: 8px;
   color: var(--gold);
-  min-height: 44px;
+  min-height: 52px;
+}
+.stars span {
+  display: inline-block;
+  transform: scale(0);
+}
+.stars span.pop {
+  animation: starpop 0.45s cubic-bezier(0.2, 1.5, 0.4, 1) forwards;
+}
+@keyframes starpop {
+  0% {
+    transform: scale(0) rotate(-40deg);
+  }
+  60% {
+    transform: scale(1.35) rotate(8deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
 }
 .stars .dim {
   color: #cbbfa8;
