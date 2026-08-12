@@ -147,35 +147,26 @@ export const LEVELS: LevelDef[] = [
     ],
   },
 
-  // 7 ── twin falls with a central void: don't let the streams spill inward.
+  // 7 ── fountain: one pile splits over a peak into two cups. One pull, but the
+  //      stardust fans out to both sides.
   {
     id: 7,
-    name: 'Twin Falls',
+    name: 'Fountain',
     world: W,
-    hint: '中間是黑洞，別讓星塵漏到中央',
-    pins: [
-      { id: 'l', x: 22, y: 40, len: 16, thick: 3 },
-      { id: 'r', x: 78, y: 40, len: 16, thick: 3 },
-    ],
+    hint: '星塵撞上尖頂會往兩邊分流，兩杯都要滿',
+    pins: [{ id: 'hold', x: 50, y: 30, len: 22, thick: 3 }],
     walls: [
-      // short dividers shielding each cup from the central void
-      { x: 38, y: 112, w: 3, h: 28 },
-      { x: 62, y: 112, w: 3, h: 28 },
+      { x: 43, y: 60, w: 20, h: 3, angle: -0.42 },
+      { x: 57, y: 60, w: 20, h: 3, angle: 0.42 },
     ],
-    emitters: [
-      { x: 22, y: 28, w: 12, h: 12, count: 15 },
-      { x: 78, y: 28, w: 12, h: 12, count: 15 },
-    ],
+    emitters: [{ x: 50, y: 20, w: 18, h: 10, count: 30 }],
     cups: [
-      { id: 'cl', x: 22, y: 124, w: 24, h: 22, need: 9 },
-      { id: 'cr', x: 78, y: 124, w: 24, h: 22, need: 9 },
+      { id: 'cl', x: 24, y: 128, w: 26, h: 20, need: 8 },
+      { id: 'cr', x: 76, y: 128, w: 26, h: 20, need: 8 },
     ],
-    hazards: [{ x: 50, y: 128, w: 18, h: 10, kind: 'void' }],
-    stars: { pulls: [2, 2] },
-    solution: [
-      { pin: 'l', atMs: 200 },
-      { pin: 'r', atMs: 400 },
-    ],
+    hazards: [{ x: 50, y: 116, w: 12, h: 9, kind: 'void' }],
+    stars: { pulls: [1, 1] },
+    solution: [{ pin: 'hold', atMs: 200 }],
   },
 
   // 8 ── moving hazard: time the pour past a sweeping void.
