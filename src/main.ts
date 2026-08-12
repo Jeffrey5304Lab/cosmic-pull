@@ -278,6 +278,15 @@ function updateSoundBtn(): void {
   el.btnSound.textContent = progress.muted ? '♪̶' : '♪'
 }
 
+// ── title / start screen ─────────────────────────────────────
+$('title-play').addEventListener('click', () => {
+  const title = $('title')
+  title.classList.add('fade')
+  window.setTimeout(() => title.classList.add('hidden'), 400)
+  // first user gesture — nudge the audio context awake
+  audio.sfxPull()
+})
+
 // ── boot ──────────────────────────────────────────────────────
 loadLevel(Math.min(progress.unlocked, LEVEL_COUNT))
 requestAnimationFrame(frame)

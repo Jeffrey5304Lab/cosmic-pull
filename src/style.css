@@ -264,6 +264,72 @@ body {
   text-decoration: none;
   font-size: 18px;
 }
+/* ── Title / start screen ──────────────────────────── */
+.title-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 38%, #f9f1e3 0%, #ecdcc0 100%);
+  padding: env(safe-area-inset-top) 24px env(safe-area-inset-bottom);
+  transition: opacity 0.4s ease;
+}
+.title-overlay.fade {
+  opacity: 0;
+  pointer-events: none;
+}
+.title-inner {
+  text-align: center;
+  animation: rise 0.6s cubic-bezier(0.2, 1.1, 0.4, 1) both;
+}
+@keyframes rise {
+  from {
+    transform: translateY(18px);
+    opacity: 0;
+  }
+}
+.title-motif {
+  width: 160px;
+  height: 200px;
+}
+.title-motif .tw {
+  animation: twk 1.8s ease-in-out infinite;
+}
+.title-motif .t2 {
+  animation-delay: 0.3s;
+}
+.title-motif .t3 {
+  animation-delay: 0.6s;
+}
+@keyframes twk {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.game-logo {
+  font-size: 52px;
+  margin: 4px 0 2px;
+  color: var(--ink);
+  line-height: 1;
+}
+.tagline {
+  font-size: 19px;
+  color: var(--ink-soft);
+  margin: 0 0 26px;
+}
+.big-btn {
+  font-size: 26px;
+  padding: 14px 46px;
+  border-radius: 18px;
+  box-shadow: 0 5px 0 var(--ink);
+}
+
 .hidden {
   display: none !important;
 }
