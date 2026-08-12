@@ -14,10 +14,12 @@ describe('player-perspective robustness', () => {
       const sim = new GameSim(lv)
       step(sim, 4000)
       expect(sim.status, `L${lv.id} should still be playing if you never pull`).toBe('playing')
-      // no cup should COMPLETE on its own (a little settling is fine; a cup
-      // finishing itself would mean the level solves without the player)
+      // the pile must stay on its blocker: barely anything should reach a cup
+      // before the player pulls (guards the "level plays itself" leak bug)
       for (const c of sim.cupViews) {
-        expect(c.ratio, `L${lv.id} cup ${c.def.id} completed itself unaided`).toBeLessThan(1)
+        expect(c.filled, `L${lv.id} cup ${c.def.id} auto-filled ${c.filled} before any pull`).toBeLessThan(
+          Math.max(6, c.def.need * 0.3),
+        )
       }
     }
   })

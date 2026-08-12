@@ -179,16 +179,21 @@ export class GameSim {
       const row = Math.floor(i / perRow)
       const jx = ((i * 37) % 13) / 13 - 0.5
       const jy = ((i * 53) % 11) / 11 - 0.5
-      const x = cx - w / 2 + r + col * (r * 2.1) + jx * r * 0.6
-      const y = cy - (em.h * SCALE) / 2 + r + row * (r * 2.05) + jy * r * 0.4
+      // Stack the pile UPWARD from the emitter's bottom edge, and only small
+      // jitter. (Stacking downward pushed the bottom rows of a big pile into the
+      // blocker just below → matter ejected them → the pile leaked/scattered.)
+      const x = cx - w / 2 + r + col * (r * 2.2) + jx * r * 0.15
+      const y = cy + (em.h * SCALE) / 2 - r - row * (r * 2.15) + jy * r * 0.15
       this.addGrain(x, y, color)
     }
   }
 
   private addGrain(x: number, y: number, color: StardustColor): void {
     const b = Bodies.circle(x, y, PHYS.grainR * SCALE, {
-      friction: 0.02,
-      frictionStatic: 0.05,
+      // Enough friction to grip a flat blocker (pile stays put until pulled) but
+      // still below the slope of the bridges (angle ≳0.5) so they route/flow.
+      friction: 0.35,
+      frictionStatic: 0.7,
       restitution: 0.04, // low bounce so grains settle into cups instead of hopping out
       density: 0.02,
     })

@@ -70,15 +70,15 @@ export const LEVELS: LevelDef[] = [
     world: W,
     hint: '兩根斜的都是橋，把星塵送到中間。只拔上面兩根！',
     pins: [
-      { id: 'hl', x: 24, y: 44, len: 16, thick: 3 },
-      { id: 'hr', x: 76, y: 44, len: 16, thick: 3 },
-      { id: 'bl', x: 30, y: 76, len: 36, thick: 4, angle: 0.6 },
-      { id: 'br', x: 70, y: 76, len: 36, thick: 4, angle: -0.6 },
+      { id: 'hl', x: 24, y: 44, len: 24, thick: 3 },
+      { id: 'hr', x: 76, y: 44, len: 24, thick: 3 },
+      { id: 'bl', x: 30, y: 78, len: 36, thick: 4, angle: 0.6 },
+      { id: 'br', x: 70, y: 78, len: 36, thick: 4, angle: -0.6 },
     ],
     walls: [],
     emitters: [
-      { x: 24, y: 30, w: 14, h: 12, count: 20 },
-      { x: 76, y: 30, w: 14, h: 12, count: 20 },
+      { x: 24, y: 32, w: 22, h: 7, count: 20 },
+      { x: 76, y: 32, w: 22, h: 7, count: 20 },
     ],
     cups: [{ id: 'c', x: 50, y: 128, w: 28, h: 20, need: 22 }],
     hazards: [
@@ -154,12 +154,12 @@ export const LEVELS: LevelDef[] = [
     name: 'Fountain',
     world: W,
     hint: '星塵撞上尖頂會往兩邊分流，兩杯都要滿',
-    pins: [{ id: 'hold', x: 50, y: 30, len: 22, thick: 3 }],
+    pins: [{ id: 'hold', x: 50, y: 32, len: 38, thick: 3 }],
     walls: [
       { x: 43, y: 60, w: 20, h: 3, angle: -0.42 },
       { x: 57, y: 60, w: 20, h: 3, angle: 0.42 },
     ],
-    emitters: [{ x: 50, y: 20, w: 18, h: 10, count: 30 }],
+    emitters: [{ x: 50, y: 24, w: 22, h: 6, count: 30 }],
     cups: [
       { id: 'cl', x: 24, y: 128, w: 26, h: 20, need: 8 },
       { id: 'cr', x: 76, y: 128, w: 26, h: 20, need: 8 },
@@ -307,8 +307,8 @@ export const LEVELS: LevelDef[] = [
       { x: 80, y: 26, w: 12, h: 12, count: 16 },
     ],
     cups: [
-      { id: 'cl', x: 40, y: 126, w: 18, h: 20, need: 9 },
-      { id: 'cr', x: 60, y: 126, w: 18, h: 20, need: 9 },
+      { id: 'cl', x: 40, y: 126, w: 18, h: 20, need: 8 },
+      { id: 'cr', x: 60, y: 126, w: 18, h: 20, need: 8 },
     ],
     hazards: [
       { x: 16, y: 128, w: 20, h: 10, kind: 'lava' },
@@ -493,12 +493,12 @@ export const LEVELS: LevelDef[] = [
     name: 'Grand Finale',
     world: W,
     hint: '大噴泉分流，中間黑洞會移動、兩側是岩漿——穩穩落杯 ✦',
-    pins: [{ id: 'hold', x: 50, y: 28, len: 22, thick: 3 }],
+    pins: [{ id: 'hold', x: 50, y: 30, len: 38, thick: 3 }],
     walls: [
       { x: 43, y: 58, w: 20, h: 3, angle: -0.42 },
       { x: 57, y: 58, w: 20, h: 3, angle: 0.42 },
     ],
-    emitters: [{ x: 50, y: 18, w: 18, h: 10, count: 32 }],
+    emitters: [{ x: 50, y: 22, w: 22, h: 6, count: 32 }],
     cups: [
       { id: 'cl', x: 24, y: 130, w: 26, h: 20, need: 8 },
       { id: 'cr', x: 76, y: 130, w: 26, h: 20, need: 8 },
