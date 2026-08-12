@@ -298,25 +298,37 @@ export const LEVELS: LevelDef[] = [
     ],
   },
 
-  // 13 ── narrow gauntlet: pour a big pile between two lavas.
+  // 13 ── twin keystones: two bridges, two cups, outer lava. Leave both bridges.
   {
     id: 13,
-    name: 'The Needle',
+    name: 'Twin Keystones',
     world: W,
-    hint: '兩側都是岩漿，縫隙很窄——穩住',
-    pins: [{ id: 'a', x: 50, y: 30, len: 26, thick: 3 }],
-    walls: [
-      { x: 28, y: 86, w: 28, h: 3, angle: 0.5 },
-      { x: 72, y: 86, w: 28, h: 3, angle: -0.5 },
+    hint: '兩座橋各撐一堆——一座都不能拔',
+    pins: [
+      { id: 'hl', x: 20, y: 38, len: 14, thick: 3 },
+      { id: 'hr', x: 80, y: 38, len: 14, thick: 3 },
+      { id: 'bl', x: 30, y: 70, len: 34, thick: 4, angle: 0.55 },
+      { id: 'br', x: 70, y: 70, len: 34, thick: 4, angle: -0.55 },
     ],
-    emitters: [{ x: 50, y: 20, w: 22, h: 10, count: 26 }],
-    cups: [{ id: 'c', x: 50, y: 130, w: 26, h: 16, need: 12 }],
+    walls: [],
+    emitters: [
+      { x: 20, y: 26, w: 12, h: 12, count: 16 },
+      { x: 80, y: 26, w: 12, h: 12, count: 16 },
+    ],
+    cups: [
+      { id: 'cl', x: 40, y: 126, w: 18, h: 20, need: 10 },
+      { id: 'cr', x: 60, y: 126, w: 18, h: 20, need: 10 },
+    ],
     hazards: [
-      { x: 12, y: 108, w: 16, h: 8, kind: 'lava' },
-      { x: 88, y: 108, w: 16, h: 8, kind: 'lava' },
+      { x: 16, y: 128, w: 20, h: 10, kind: 'lava' },
+      { x: 84, y: 128, w: 20, h: 10, kind: 'lava' },
     ],
-    stars: { pulls: [1, 1] },
-    solution: [{ pin: 'a', atMs: 200 }],
+    stars: { pulls: [2, 2] },
+    solution: [
+      { pin: 'hl', atMs: 200 },
+      { pin: 'hr', atMs: 400 },
+    ],
+    traps: ['bl', 'br'],
   },
 
   // 14 ── two sweeping voids over a funnel.
@@ -431,34 +443,38 @@ export const LEVELS: LevelDef[] = [
     ],
   },
 
-  // 18 ── colour match either side of a lava pool.
+  // 18 ── colour + bridge: each colour rides its own bridge to its cup. Pull a
+  //      bridge and that colour spills into the lava right below it.
   {
     id: 18,
-    name: 'Aqua & Gold',
+    name: 'Colour Bridges',
     world: W,
-    hint: '別讓顏色掉進中間的岩漿',
+    hint: '每個顏色靠自己的橋——拔錯橋，那個顏色就沒了',
     pins: [
-      { id: 'g', x: 24, y: 38, len: 16, thick: 3 },
-      { id: 'a', x: 76, y: 38, len: 16, thick: 3 },
+      { id: 'hg', x: 22, y: 40, len: 14, thick: 3 },
+      { id: 'ha', x: 78, y: 40, len: 14, thick: 3 },
+      { id: 'bg', x: 30, y: 68, len: 30, thick: 4, angle: 0.5 },
+      { id: 'ba', x: 70, y: 68, len: 30, thick: 4, angle: -0.5 },
     ],
-    walls: [
-      { x: 38, y: 112, w: 3, h: 28 },
-      { x: 62, y: 112, w: 3, h: 28 },
-    ],
+    walls: [{ x: 50, y: 100, w: 3, h: 64 }],
     emitters: [
-      { x: 24, y: 26, w: 12, h: 12, count: 15, color: 'gold' },
-      { x: 76, y: 26, w: 12, h: 12, count: 15, color: 'aqua' },
+      { x: 22, y: 28, w: 12, h: 10, count: 13, color: 'gold' },
+      { x: 78, y: 28, w: 12, h: 10, count: 13, color: 'aqua' },
     ],
     cups: [
-      { id: 'cg', x: 22, y: 124, w: 24, h: 22, need: 9, color: 'gold' },
-      { id: 'ca', x: 78, y: 124, w: 24, h: 22, need: 9, color: 'aqua' },
+      { id: 'cg', x: 40, y: 128, w: 18, h: 20, need: 8, color: 'gold' },
+      { id: 'ca', x: 60, y: 128, w: 18, h: 20, need: 8, color: 'aqua' },
     ],
-    hazards: [{ x: 50, y: 128, w: 18, h: 10, kind: 'lava' }],
+    hazards: [
+      { x: 22, y: 132, w: 16, h: 8, kind: 'lava' },
+      { x: 78, y: 132, w: 16, h: 8, kind: 'lava' },
+    ],
     stars: { pulls: [2, 2] },
     solution: [
-      { pin: 'g', atMs: 200 },
-      { pin: 'a', atMs: 400 },
+      { pin: 'hg', atMs: 200 },
+      { pin: 'ha', atMs: 400 },
     ],
+    traps: ['bg', 'ba'],
   },
 
   // 19 ── one huge pour: fill the big cup.
