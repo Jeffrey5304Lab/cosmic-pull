@@ -6,7 +6,7 @@ import type { SimEvent, StardustColor } from './types.ts'
  * Kept tasteful and warm — hand-drawn wood chips, soft sparkles, gentle
  * embers — rather than the generic confetti explosion that screams "AI game".
  */
-type Kind = 'chip' | 'spark' | 'ember' | 'implode' | 'star'
+type Kind = 'chip' | 'spark' | 'ember' | 'implode' | 'star' | 'ring'
 
 interface P {
   x: number
@@ -144,6 +144,29 @@ export class Particles {
     }
   }
 
+  /** A cup just filled up: a bright ring + a little upward sparkle pop. */
+  cupBurst(x: number, y: number, color: StardustColor): void {
+    const hex = grainHex(color)
+    this.add({ x, y, size: 3, max: 0.55, color: hex, kind: 'ring' })
+    for (let i = 0; i < 8; i++) {
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.2
+      const sp = 16 + Math.random() * 24
+      this.add({
+        x,
+        y,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp,
+        max: 0.6,
+        size: 0.8 + Math.random(),
+        grav: 40,
+        color: i % 3 === 0 ? '#fff' : hex,
+        kind: 'star',
+        rot: Math.random() * 6,
+        spin: (Math.random() - 0.5) * 12,
+      })
+    }
+  }
+
   /** Celebratory star fountain from a point (level complete). */
   celebrate(x: number, y: number): void {
     for (let i = 0; i < 26; i++) {
@@ -182,7 +205,15 @@ export class Particles {
       const k = 1 - p.life / p.max
       ctx.globalAlpha = Math.max(0, k)
       ctx.fillStyle = p.color
-      if (p.kind === 'chip') {
+      if (p.kind === 'ring') {
+        const r = p.size + (1 - k) * 14
+        ctx.globalAlpha = Math.max(0, k) * 0.8
+        ctx.strokeStyle = p.color
+        ctx.lineWidth = 1 + k * 1.5
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, r, 0, Math.PI * 2)
+        ctx.stroke()
+      } else if (p.kind === 'chip') {
         ctx.save()
         ctx.translate(p.x, p.y)
         ctx.rotate(p.rot)

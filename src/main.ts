@@ -42,6 +42,8 @@ let hoverPin: string | null = null
 let lastFilled = 0
 let dripCooldown = 0
 let shake = 0 // screenshake magnitude (world units), decays each frame
+let flash = 0 // golden full-screen flash (0–1), decays each frame
+const fullCups = new Set<string>() // cups that have already popped their "filled" burst
 
 audio.setMuted(progress.muted)
 updateSoundBtn()
@@ -57,6 +59,8 @@ function loadLevel(id: number): void {
   acc = 0
   lastFilled = 0
   shake = 0
+  flash = 0
+  fullCups.clear()
   hoverPin = null
   el.levelName.textContent = `${id}. ${level.name}`
   updatePullCount()
@@ -132,6 +136,17 @@ function frame(now: number): void {
   }
   lastFilled = filled
 
+  // celebrate the instant a cup tops out (ring + sparkle pop + chime)
+  for (const c of sim.cupViews) {
+    if (c.ratio >= 1 && !fullCups.has(c.def.id)) {
+      fullCups.add(c.def.id)
+      particles.cupBurst(c.def.x, c.def.y - c.def.h / 2, c.def.color ?? 'gold')
+      audio.sfxStar(0)
+      shake = Math.min(shake + 0.6, 2)
+    }
+  }
+  flash *= Math.pow(0.015, dt / 1000) // quick decay
+
   // render (in CSS-pixel space scaled by dpr)
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, rect.width, rect.height)
@@ -152,6 +167,12 @@ function frame(now: number): void {
 
   // soft vignette for depth/atmosphere (screen space)
   drawVignette(rect.width, rect.height)
+
+  // golden win flash (screen space)
+  if (flash > 0.01) {
+    ctx.fillStyle = `rgba(245,185,66,${(flash * 0.35).toFixed(3)})`
+    ctx.fillRect(0, 0, rect.width, rect.height)
+  }
 
   requestAnimationFrame(frame)
 }
@@ -177,6 +198,7 @@ function checkResolution(): void {
     audio.sfxWin()
     haptics.notifyWin()
     shake = 1.6
+    flash = 0.7
     for (const c of sim.cupViews) particles.celebrate(c.def.x, c.def.y - c.def.h / 2)
     setTimeout(() => showWin(stars), 550)
   } else if (sim.status === 'lost') {
