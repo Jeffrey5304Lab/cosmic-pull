@@ -12,6 +12,12 @@ const { Engine, World, Bodies, Body, Composite, Events } = Matter
  */
 const SCALE = 6
 
+/** Net displacement (WORLD units) a grain must drift before the board counts as
+ *  "active" again — above resting jitter, below any real slide. */
+const REST_EPS = 0.35
+/** How long the board must stay quiescent before we call it stuck (ms). */
+const STUCK_HOLD_MS = 800
+
 // Collision categories (bit flags).
 const CAT = {
   wall: 0x0001,
@@ -23,6 +29,10 @@ const CAT = {
 interface Grain {
   body: Matter.Body
   color: StardustColor
+  /** rest anchor: last position where this grain was "settled" (physics units).
+   *  Used for jitter-robust quiescence (net displacement, not noisy velocity). */
+  ax?: number
+  ay?: number
 }
 
 interface CupRuntime {
@@ -51,6 +61,8 @@ export class GameSim {
   pulls = 0
   wasted = 0
   private settleHoldMs = 0
+  /** ms the whole board has been quiescent (no grain drifting past REST_EPS). */
+  private quietMs = 0
 
   /**
    * FX events (WORLD units) accumulated since the last `drainEvents()`. The
@@ -288,6 +300,7 @@ export class GameSim {
   }
 
   private evaluate(dtMs: number): void {
+    this.trackQuiescence(dtMs)
     const remaining = this.cups.reduce((s, c) => s + Math.max(0, c.def.need - c.filled), 0)
     if (remaining === 0) {
       this.settleHoldMs += dtMs
@@ -297,6 +310,57 @@ export class GameSim {
     // Never lose before the first pull — the player should be free to study the
     // board without a stray settling grain failing the level for them.
     if (this.pulls > 0 && remaining > this.grains.length) this.status = 'lost'
+  }
+
+  /** Jitter-robust "has the board gone still?" — a resting pile still velocity-
+   *  jitters, so we track *net displacement* from each grain's rest anchor.
+   *  A grain that drifts past REST_EPS re-anchors and counts the board as active. */
+  private trackQuiescence(dtMs: number): void {
+    const eps = REST_EPS * SCALE
+    let active = this.grains.length === 0
+    for (const g of this.grains) {
+      const p = g.body.position
+      if (g.ax === undefined) {
+        g.ax = p.x
+        g.ay = p.y
+        active = true
+        continue
+      }
+      if (Math.hypot(p.x - g.ax, p.y - g.ay!) > eps) {
+        g.ax = p.x
+        g.ay = p.y
+        active = true
+      }
+    }
+    this.quietMs = active ? 0 : this.quietMs + dtMs
+  }
+
+  /** True when the board can no longer progress and the player must retry:
+   *  cups unfilled, everything has come to rest, and no un-pulled pin is still
+   *  holding grains (so no remaining pull could ever mobilise the pile). Cozy
+   *  design: this drives a gentle "tap ↻" cue, NOT an automatic loss. */
+  get stuck(): boolean {
+    if (this.status !== 'playing' || this.pulls === 0) return false
+    if (this.quietMs < STUCK_HOLD_MS) return false
+    const remaining = this.cups.reduce((s, c) => s + Math.max(0, c.def.need - c.filled), 0)
+    if (remaining === 0) return false
+    return !this.anyPinHoldingGrain()
+  }
+
+  /** Any un-pulled *blocker* (near-horizontal) pin with a grain resting against
+   *  it? If so, pulling that blocker could still release the pile downward, so
+   *  the board is not a dead end. Slanted "bridge" pins don't count: pulling one
+   *  routes/dumps the stream (usually into a hazard) rather than freeing a stuck
+   *  pile, so a pile resting only on bridges/walls is a genuine dead end. */
+  private anyPinHoldingGrain(): boolean {
+    const reach = (PHYS.grainR + 0.8) * SCALE
+    for (const [, pin] of this.pins) {
+      if (Math.abs(pin.angle) >= 0.15) continue // bridge, not a releasable blocker
+      for (const g of this.grains) {
+        if (distToBody(pin, g.body.position.x, g.body.position.y) < reach) return true
+      }
+    }
+    return false
   }
 
   private removeGrain(g: Grain): boolean {
@@ -314,6 +378,7 @@ export class GameSim {
     this.pins.delete(id)
     World.remove(this.engine.world, body)
     this.pulls++
+    this.quietMs = 0 // a pull re-mobilises the pile; don't carry stale stillness
     this.events.push({
       type: 'pull',
       x: body.position.x / SCALE,
