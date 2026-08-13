@@ -29,6 +29,7 @@ const el = {
   menuSub: $('menu-sub'),
   levelGrid: $('level-grid'),
   btnSound: $('btn-sound'),
+  btnRestart: $('btn-restart'),
 }
 
 // ── state ─────────────────────────────────────────────────────
@@ -43,6 +44,7 @@ let lastFilled = 0
 let dripCooldown = 0
 let shake = 0 // screenshake magnitude (world units), decays each frame
 let flash = 0 // golden full-screen flash (0–1), decays each frame
+let stuckShown = false // gentle "no flow left" cue already surfaced this attempt
 const fullCups = new Set<string>() // cups that have already popped their "filled" burst
 
 audio.setMuted(progress.muted)
@@ -60,8 +62,10 @@ function loadLevel(id: number): void {
   lastFilled = 0
   shake = 0
   flash = 0
+  stuckShown = false
   fullCups.clear()
   hoverPin = null
+  el.btnRestart.classList.remove('nudge')
   el.levelName.textContent = `${id}. ${level.name}`
   updatePullCount()
   hideAllOverlays()
@@ -85,6 +89,22 @@ function showHint(text?: string): void {
   hintTimer = window.setTimeout(() => {
     el.hint.style.opacity = '0'
   }, 3200)
+}
+
+/** Cozy dead-end nudge: the board can no longer flow, but we never auto-fail a
+ *  player. Surface a persistent, friendly toast and pulse the restart button. */
+function showStuck(): void {
+  window.clearTimeout(hintTimer)
+  el.hint.textContent = '星塵流不動了 — 點 ↻ 再試一次'
+  el.hint.classList.remove('hidden')
+  el.hint.style.opacity = '1'
+  el.btnRestart.classList.add('nudge')
+}
+
+function clearStuck(): void {
+  el.btnRestart.classList.remove('nudge')
+  if (stuckShown) showHint(undefined)
+  stuckShown = false
 }
 
 function hideAllOverlays(): void {
@@ -127,6 +147,12 @@ function frame(now: number): void {
   shake *= Math.pow(0.001, dt / 1000) // smooth exponential decay
 
   if (!resolved) checkResolution()
+
+  // cozy dead-end: nothing can flow anymore — nudge a retry (never auto-lose)
+  if (!resolved && !stuckShown && sim.stuck) {
+    stuckShown = true
+    showStuck()
+  }
 
   // audio feedback when a cup gains stardust
   const filled = sim.cupViews.reduce((s, c) => s + c.filled, 0)
@@ -272,6 +298,7 @@ canvas.addEventListener('pointerdown', (e) => {
     haptics.tapMedium()
     updatePullCount()
     showHint(undefined)
+    clearStuck() // a fresh pull re-mobilises the board; drop any dead-end nudge
     hoverPin = null
   }
 })
