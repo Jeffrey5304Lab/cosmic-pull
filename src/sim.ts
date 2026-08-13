@@ -2,7 +2,7 @@ import Matter from 'matter-js'
 import { PHYS } from './config.ts'
 import type { CupDef, HazardDef, LevelDef, PinDef, SimEvent, SimStatus, StardustColor } from './types.ts'
 
-const { Engine, World, Bodies, Body, Composite, Events } = Matter
+const { Engine, World, Bodies, Body, Composite, Events, Sleeping } = Matter
 
 /**
  * matter-js is tuned for pixel-scale bodies; our authoring world is only
@@ -79,7 +79,11 @@ export class GameSim {
 
   constructor(level: LevelDef) {
     this.level = level
-    this.engine = Engine.create()
+    // Sleeping: resting piles freeze completely (no micro-jitter/creep). This
+    // is what makes the quiescence/stuck detection reliable — and saves CPU.
+    // Gotcha: removing a static pin does NOT wake bodies sleeping on it, so
+    // pull() wakes every grain manually.
+    this.engine = Engine.create({ enableSleeping: true })
     this.engine.gravity.y = PHYS.gravityY
     this.build()
     this.wireCollisions()
@@ -347,15 +351,14 @@ export class GameSim {
     return !this.anyPinHoldingGrain()
   }
 
-  /** Any un-pulled *blocker* (near-horizontal) pin with a grain resting against
-   *  it? If so, pulling that blocker could still release the pile downward, so
-   *  the board is not a dead end. Slanted "bridge" pins don't count: pulling one
-   *  routes/dumps the stream (usually into a hazard) rather than freeing a stuck
-   *  pile, so a pile resting only on bridges/walls is a genuine dead end. */
+  /** Any un-pulled pin with a grain resting against it? If so, pulling it can
+   *  still change the board (free a pile, or drop a bridged stream — sometimes
+   *  into a cup!), so this is not a dead end. Only when NO pin touches any
+   *  grain is the board provably frozen: pins interact with nothing else, so no
+   *  remaining pull can move a single grain. */
   private anyPinHoldingGrain(): boolean {
     const reach = (PHYS.grainR + 0.8) * SCALE
     for (const [, pin] of this.pins) {
-      if (Math.abs(pin.angle) >= 0.15) continue // bridge, not a releasable blocker
       for (const g of this.grains) {
         if (distToBody(pin, g.body.position.x, g.body.position.y) < reach) return true
       }
@@ -379,6 +382,9 @@ export class GameSim {
     World.remove(this.engine.world, body)
     this.pulls++
     this.quietMs = 0 // a pull re-mobilises the pile; don't carry stale stillness
+    // matter-js does not wake sleeping bodies when a static support vanishes —
+    // without this, a slept pile hangs in mid-air after its pin is pulled.
+    for (const g of this.grains) Sleeping.set(g.body, false)
     this.events.push({
       type: 'pull',
       x: body.position.x / SCALE,

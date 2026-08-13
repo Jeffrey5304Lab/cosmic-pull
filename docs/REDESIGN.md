@@ -43,15 +43,11 @@ Ship **1→2→3** first; 4–6 are stretch set-pieces.
 
 ## Foundation fixes (P0 — do first, under any design)
 Everything above needs a clean, fair core. In priority order:
-- **F1. Soft-lock / stuck feedback.** Partial pulls strand grains → sim hangs in
-  `playing` forever (hit 10/19 levels in an adversarial probe). Detect a
-  quiescent, un-progressable board (all grains at rest via *displacement*
-  tracking — robust to jitter — AND no unpulled pin still holding grains) and
-  surface a gentle "no flow left — tap ↻" retry cue. **No hard auto-loss** (cozy:
-  never false-fail a thinking player). See [[softlock-partial-pull]].
-- **F2. Calm settle (damping).** Grains jitter (speed spikes ~7.5 while
-  "resting"). Add small `frictionAir` so piles go truly still → cozier pour, less
-  micro-leak, cleaner rest. Re-verify all solvability timings stay green.
+- **F1. Soft-lock / stuck feedback.** ✅ DONE (see Findings below). Frozen
+  boards (no pull can move any grain) are now detected by `sim.stuck`; wire it
+  to a gentle "no flow left — tap ↻" cue in main.ts. **No hard auto-loss** (cozy:
+  never false-fail a thinking player).
+- **F2. Calm settle.** ✅ DONE via `enableSleeping` (not damping — see Findings).
 - **F3. Fairness pass on supply.** Re-tune emitters to a comfortable buffer so
   scatter never causes an unfair loss; move the challenge into the star rule.
 - **F4. Telegraph bridges vs blockers.** Distinct look (not just angle) so a
@@ -88,39 +84,40 @@ Fix list (severity):
   + robustness + stuck tests.
 - Commit per phase. This file is the resume point (see PLAN.md convention).
 
-## Findings from the first execution spike (2026-08-14)
-Landed the F1 **scaffolding** in `sim.ts` (all 46 tests still green, nothing
-wired to UI yet):
-- `trackQuiescence()` — jitter-robust stillness via net displacement from each
-  grain's rest anchor (`REST_EPS`, `STUCK_HOLD_MS`, `Grain.ax/ay`).
-- `get stuck` — quiescent + cups unfilled + no *blocker* pin still holding grains
-  (bridges don't count; pulling one dumps rather than frees). Non-mutating, so it
-  can only ever drive a gentle hint, never a false loss.
+## Findings — F1+F2 landed after a re-audit (2026-08-14)
+The first spike's diagnosis was **wrong in two ways**; a second pass with
+ground-truth probing corrected it. Final state (all 50 tests green):
 
-**What we learned (important for whoever continues):**
-1. The `stuck` getter currently catches only ~1/10 probe soft-locks. Root cause:
-   **without damping the piles never truly go still** — they micro-creep past
-   `REST_EPS`, so `quietMs` keeps resetting and the board is never "quiescent".
-   So **F2 (damping) is a prerequisite for F1**, not a parallel task.
-2. But a naive `frictionAir: 0.02` on grains **breaks solvability** (4 solve
-   tests fail) and creates *more* dead-ends — grains stall mid-slope. Damping
-   must be tuned jointly with slope angles / gravity, and re-verified against the
-   whole solve+robustness suite. Reverted for now.
-3. Zero false positives on intended solutions is the hard constraint that held
-   throughout — keep it.
+1. **The "10/19 levels soft-lock" claim was overstated.** Ground truth (pull
+   every remaining pin from each "hung" probe state): 11/12 of those states
+   still had a pin holding grains — the player had real moves left, and 8 even
+   went on to WIN. Those are normal mid-game states, not dead ends. Truly
+   frozen boards are rare (≈1 per probe sweep) but real.
+2. **`enableSleeping: true` beats damping.** `frictionAir` broke solvability;
+   sleeping freezes resting piles completely (no jitter/creep), costs nothing,
+   and broke zero tests. Gotcha handled: matter-js does NOT wake sleeping
+   bodies when their static support is removed — `pull()` wakes all grains.
+3. **Bridges can be winning moves.** An earlier draft treated only blocker pins
+   as "board still has options"; L4 disproved it (pulling a bridge dropped the
+   stranded pile into the cup → win). Final `stuck` semantics: fire only when
+   **no un-pulled pin touches any grain** — then provably no pull can move
+   anything. Validated: never fires when the rest of the pins could still win,
+   and never fires along any intended solution (`src/stuck.test.ts`).
+4. `sim.stuck` is non-mutating — UI may show a gentle retry cue, never a loss.
 
-**Recommended next approach:** treat F1+F2 as one tuning loop. Options to try:
-raise `REST_EPS` a touch and/or add a *very* small `frictionAir` (~0.005–0.01)
-only after confirming every `sim.solve` test stays green; or re-anchor
-quiescence on a longer window. Then wire `sim.stuck` in `main.ts` to a gentle
-"無法再流動了 — 點 ↻ 重試" toast (no auto-loss). Add a regression test that
-asserts high catch-rate on the random-subset probe AND zero false-stuck on
-solutions.
+**Remaining wiring:** surface `sim.stuck` in `main.ts` as a soft toast
+("星塵流不動了 — 點 ↻ 再試一次") after a short grace, styled like `.hint`.
+
+**Star-rule gap (new, important):** under cozy/comfortable supply the current
+`computeStars` (pulls-only) collapses — par is trivially met. 3★ must also
+require leftover stardust (e.g. `wasted ≤ X`) or a time component. Do this with
+F3.
 
 ## Status
 - [x] Health-check + direction (this doc)
-- [~] F1 stuck feedback — scaffolding landed (sim.ts), NOT effective until F2
-- [ ] F2 damping / calm settle — prerequisite for F1; needs joint tuning
-- [ ] F3 supply fairness pass
+- [x] F1 stuck detection — `sim.stuck` + regression suite (`stuck.test.ts`)
+- [x] F2 calm settle — `enableSleeping` + wake-on-pull
+- [ ] F1-UI: wire `sim.stuck` to a gentle retry toast in main.ts
+- [ ] F3 supply fairness pass + star-rule rework (pulls AND leftover)
 - [ ] F4 telegraph bridges
 - [ ] Ch.1 recut (cozy) · Ch.2 · Ch.3 + mechanics 1→2→3
