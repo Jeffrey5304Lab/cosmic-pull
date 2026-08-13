@@ -116,8 +116,20 @@ F3.
 ## Status
 - [x] Health-check + direction (this doc)
 - [x] F1 stuck detection — `sim.stuck` + regression suite (`stuck.test.ts`)
+- [x] F1-UI — gentle "board stuck" toast + restart nudge in main.ts (no auto-loss)
 - [x] F2 calm settle — `enableSleeping` + wake-on-pull
-- [ ] F1-UI: wire `sim.stuck` to a gentle retry toast in main.ts
-- [ ] F3 supply fairness pass + star-rule rework (pulls AND leftover)
-- [ ] F4 telegraph bridges
-- [ ] Ch.1 recut (cozy) · Ch.2 · Ch.3 + mechanics 1→2→3
+- [x] F3 star-rule rework — dual-axis (pulls AND waste vs solution), `logic.test.ts`
+- [x] F4 telegraph bridges — downhill chevrons on slanted pins (⚠ visually UNVERIFIED)
+- [x] UX polish — reduce-motion a11y, menu scroll, HUD truncation, 44pt targets, lose card
+- [x] Mechanic 1 — **chain pins** (`PinDef.releases`) + `chain.test.ts`
+- [x] Mechanic 2 — **gate-on-fill** (`WallDef.gate`) + `gate.test.ts`
+- [ ] Mechanic 3 — **wormhole portal** (teleport grains A→B) — not started
+- [ ] Author real levels using chain/gate + the cozy→complex 3-chapter recut
+- [ ] F3b supply fairness: buffers already generous (recent fixes); revisit per level with playtest
+- [ ] Polish: show 3★ target in HUD; locale decision (EN UI vs zh-TW hints)
+- [ ] Visual sign-off pass on F4 chevrons + a headless PNG harness (node-canvas)
+
+### What NOT to trust without a human playtest
+- F4 chevron **appearance** (rendered blind).
+- F3 star **tolerances** (`tol3`/`tol2` in logic.ts) — mechanism proven, feel untuned.
+- The new mechanics' **fun** — engine + solvability proven, no level authored yet.
