@@ -221,7 +221,7 @@ function checkResolution(): void {
   if (sim.status !== 'playing') showHint(undefined) // clear any lingering coaching toast
   if (sim.status === 'won') {
     resolved = true
-    const stars = computeStars(sim.level, sim.pulls)
+    const stars = computeStars(sim.level, sim.pulls, sim.wasted)
     progress = recordWin(progress, currentId, stars, LEVEL_COUNT)
     audio.sfxWin()
     haptics.notifyWin()
