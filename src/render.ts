@@ -228,6 +228,26 @@ export class Renderer {
       ctx.stroke()
     }
     ctx.globalAlpha = 1
+    // Slanted pins are "bridges" — stardust slides down them. Telegraph that
+    // function with faint downhill chevrons so a ramp reads differently from a
+    // flat blocker (fairness: no more "which pin was a trap?" guessing).
+    if (Math.abs(angle) >= 0.15) {
+      const dir = angle > 0 ? 1 : -1 // downhill along the pin's local +x/-x
+      const s = thick * 0.32
+      ctx.globalAlpha = 0.5
+      ctx.strokeStyle = PALETTE.gold
+      ctx.lineWidth = 0.5
+      ctx.lineCap = 'round'
+      for (let i = -1; i <= 1; i++) {
+        const cx = i * len * 0.24
+        ctx.beginPath()
+        ctx.moveTo(cx - dir * s, -s)
+        ctx.lineTo(cx + dir * s, 0)
+        ctx.lineTo(cx - dir * s, s)
+        ctx.stroke()
+      }
+      ctx.globalAlpha = 1
+    }
     // knob (the pull tab)
     ctx.beginPath()
     ctx.arc(len / 2, 0, thick * 0.75, 0, Math.PI * 2)
