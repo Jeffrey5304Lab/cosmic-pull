@@ -19,6 +19,12 @@ export interface PinDef {
   thick: number
   /** rotation in radians (0 = horizontal) */
   angle?: number
+  /**
+   * Chain reaction: pulling this pin also auto-removes these pin ids after a
+   * short beat (they are NOT counted as player pulls). Enables sequencing
+   * puzzles — "pull one, a cascade follows". Chains may nest.
+   */
+  releases?: string[]
 }
 
 /** A fixed obstacle: ink-drawn wall/ledge. Never removable. */

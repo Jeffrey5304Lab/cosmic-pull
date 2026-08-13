@@ -17,6 +17,8 @@ const SCALE = 6
 const REST_EPS = 0.35
 /** How long the board must stay quiescent before we call it stuck (ms). */
 const STUCK_HOLD_MS = 800
+/** Beat between pulling a chain pin and its `releases` auto-popping. */
+const CHAIN_DELAY_MS = 260
 
 // Collision categories (bit flags).
 const CAT = {
@@ -63,6 +65,10 @@ export class GameSim {
   private settleHoldMs = 0
   /** ms the whole board has been quiescent (no grain drifting past REST_EPS). */
   private quietMs = 0
+  /** sim-time clock (ms), used to fire scheduled chain-pin releases. */
+  private clockMs = 0
+  /** chain pins queued to auto-release: {pin id, when in clockMs}. */
+  private pendingReleases: { id: string; atMs: number }[] = []
 
   /**
    * FX events (WORLD units) accumulated since the last `drainEvents()`. The
@@ -258,6 +264,14 @@ export class GameSim {
       return
     }
 
+    // fire any chain-pin releases whose beat has elapsed (auto, not a player pull)
+    this.clockMs += dtMs
+    if (this.pendingReleases.length) {
+      const due = this.pendingReleases.filter((r) => r.atMs <= this.clockMs)
+      this.pendingReleases = this.pendingReleases.filter((r) => r.atMs > this.clockMs)
+      for (const r of due) this.removePin(r.id, false)
+    }
+
     for (const hz of this.hazards) {
       if (hz.def.moveX && hz.def.moveRange) {
         hz.phase += (dtMs / 1000) * hz.def.moveX
@@ -375,12 +389,22 @@ export class GameSim {
   }
 
   // ── player actions ──────────────────────────────────────────
+  /** Player taps a pin. Chain releases (`removePin`) don't go through here so
+   *  they never inflate the pull count. */
   pull(id: string): boolean {
+    if (this.status !== 'playing') return false
+    return this.removePin(id, true)
+  }
+
+  /** Remove a pin from the world. Shared by player pulls (`countAsPull`) and
+   *  automatic chain releases. Removing a pin's `releases` are scheduled to pop
+   *  after a short beat, enabling sequencing puzzles. */
+  private removePin(id: string, countAsPull: boolean): boolean {
     const body = this.pins.get(id)
-    if (!body || this.status !== 'playing') return false
+    if (!body) return false
     this.pins.delete(id)
     World.remove(this.engine.world, body)
-    this.pulls++
+    if (countAsPull) this.pulls++
     this.quietMs = 0 // a pull re-mobilises the pile; don't carry stale stillness
     // matter-js does not wake sleeping bodies when a static support vanishes —
     // without this, a slept pile hangs in mid-air after its pin is pulled.
@@ -391,6 +415,10 @@ export class GameSim {
       y: body.position.y / SCALE,
       angle: body.angle,
     })
+    const releases = this.level.pins.find((p) => p.id === id)?.releases
+    if (releases) {
+      for (const rid of releases) this.pendingReleases.push({ id: rid, atMs: this.clockMs + CHAIN_DELAY_MS })
+    }
     return true
   }
 
