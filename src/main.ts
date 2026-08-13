@@ -46,6 +46,8 @@ let shake = 0 // screenshake magnitude (world units), decays each frame
 let flash = 0 // golden full-screen flash (0–1), decays each frame
 let stuckShown = false // gentle "no flow left" cue already surfaced this attempt
 const fullCups = new Set<string>() // cups that have already popped their "filled" burst
+// Respect the OS "reduce motion" setting: skip screenshake + the golden flash.
+const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 
 audio.setMuted(progress.muted)
 updateSoundBtn()
@@ -177,7 +179,7 @@ function frame(now: number): void {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, rect.width, rect.height)
   const t = renderer.transformFor(rect.width, rect.height)
-  if (shake > 0.01) {
+  if (shake > 0.01 && !reduceMotion) {
     t.ox += (Math.random() - 0.5) * shake * t.scale
     t.oy += (Math.random() - 0.5) * shake * t.scale
   }
@@ -195,7 +197,7 @@ function frame(now: number): void {
   drawVignette(rect.width, rect.height)
 
   // golden win flash (screen space)
-  if (flash > 0.01) {
+  if (flash > 0.01 && !reduceMotion) {
     ctx.fillStyle = `rgba(245,185,66,${(flash * 0.35).toFixed(3)})`
     ctx.fillRect(0, 0, rect.width, rect.height)
   }
@@ -256,6 +258,7 @@ function showWin(stars: number): void {
 }
 
 function openMenu(): void {
+  hideAllOverlays() // clear win/lose first so the menu never stacks on them
   el.menuSub.textContent = `★ ${totalStars(progress)} / ${LEVEL_COUNT * 3}`
   el.levelGrid.innerHTML = ''
   for (const lv of LEVELS) {
@@ -312,6 +315,7 @@ $('win-share').addEventListener('click', () => {
   void shareResult(sim.level, lastStars)
 })
 $('lose-retry').addEventListener('click', () => loadLevel(currentId))
+$('lose-menu').addEventListener('click', openMenu)
 $('win-next').addEventListener('click', () => {
   if (currentId >= LEVEL_COUNT) openMenu()
   else loadLevel(currentId + 1)
