@@ -36,6 +36,12 @@ export interface WallDef {
   angle?: number
   /** decorative rounded look only; physics uses the rectangle */
   round?: boolean
+  /**
+   * Gate: this wall stays solid until the cup with this id is filled, then it
+   * opens (is removed) and whatever it held flows. Enables multi-step
+   * dependency puzzles ("fill A to open the path to B").
+   */
+  gate?: string
 }
 
 /** Where stardust starts. A pre-placed pile of `count` grains. */

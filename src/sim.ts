@@ -80,6 +80,8 @@ export class GameSim {
   private grains: Grain[] = []
   private cups: CupRuntime[] = []
   private hazards: HazardRuntime[] = []
+  /** gate walls: removed once their `cupId` fills, opening a held path. */
+  private gates: { body: Matter.Body; cupId: string; open: boolean }[] = []
   private toCollect: { grain: Grain; cup: CupRuntime }[] = []
   private toWaste = new Map<Matter.Body, HazardDef['kind']>()
 
@@ -113,14 +115,17 @@ export class GameSim {
     }
     Composite.add(this.engine.world, bounds)
 
-    for (const wd of this.level.walls) this.addWall(wd)
+    for (const wd of this.level.walls) {
+      const body = this.addWall(wd)
+      if (wd.gate) this.gates.push({ body, cupId: wd.gate, open: false })
+    }
     for (const pd of this.level.pins) this.addPin(pd)
     for (const cd of this.level.cups) this.addCup(cd)
     for (const hd of this.level.hazards) this.addHazard(hd)
     for (const em of this.level.emitters) this.spawnEmitter(em)
   }
 
-  private addWall(wd: { x: number; y: number; w: number; h: number; angle?: number }): void {
+  private addWall(wd: { x: number; y: number; w: number; h: number; angle?: number }): Matter.Body {
     const b = Bodies.rectangle(wd.x * SCALE, wd.y * SCALE, wd.w * SCALE, wd.h * SCALE, {
       isStatic: true,
       angle: wd.angle ?? 0,
@@ -130,6 +135,21 @@ export class GameSim {
     b.collisionFilter = { group: 0, category: CAT.wall, mask: CAT.grain }
     b.label = 'wall'
     Composite.add(this.engine.world, b)
+    return b
+  }
+
+  /** Open any gate whose cup has just filled — removes the wall so the stream it
+   *  held can flow. Wakes grains so a slept pile above it drops. */
+  private processGates(): void {
+    for (const gate of this.gates) {
+      if (gate.open) continue
+      const cup = this.cups.find((c) => c.def.id === gate.cupId)
+      if (!cup || cup.filled < cup.def.need) continue
+      gate.open = true
+      World.remove(this.engine.world, gate.body)
+      this.quietMs = 0
+      for (const g of this.grains) Sleeping.set(g.body, false)
+    }
   }
 
   private addPin(pd: PinDef): void {
@@ -303,6 +323,7 @@ export class GameSim {
     }
     this.toWaste.clear()
 
+    this.processGates() // open any gate whose cup just filled
     this.reap()
     this.evaluate(dtMs)
   }
