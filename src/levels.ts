@@ -372,10 +372,15 @@ export const LEVELS: LevelDef[] = [
     id: 15,
     name: 'Clear the Shelf',
     world: W,
-    hint: '先開上面的閘，等它流下去，再放大水流',
+    // CHAIN: pulling 'gate' also knocks out 'catch' a beat later, so one pull
+    // starts a cascade the player has to have set up correctly first.
+    // (The chutes stay scenery: with the cup directly below they aren't
+    // load-bearing, so making them pullable would be a fake choice.)
+    hint: '拔中間那根會連鎖鬆開下面的接盤——先把上面的放下來墊好',
     pins: [
       { id: 'top', x: 50, y: 28, len: 24, thick: 3 },
-      { id: 'gate', x: 50, y: 58, len: 24, thick: 3 },
+      { id: 'gate', x: 50, y: 58, len: 24, thick: 3, releases: ['catch'] },
+      { id: 'catch', x: 50, y: 78, len: 26, thick: 3 },
     ],
     walls: [
       { x: 30, y: 92, w: 30, h: 3, angle: 0.5 },
@@ -392,6 +397,7 @@ export const LEVELS: LevelDef[] = [
       { pin: 'top', atMs: 200 },
       { pin: 'gate', atMs: 1400 },
     ],
+
   },
 
   // 16 ── two colours across a drifting void.
@@ -525,22 +531,31 @@ export const LEVELS: LevelDef[] = [
     name: 'Grand Finale',
     world: W,
     hint: '大噴泉分流，中間黑洞會移動、兩側是岩漿——穩穩落杯 ✦',
+    hint: '終章 ✦ 分流、守住兩座橋，左杯滿了才會開門——最後再放行右邊',
     pins: [
       { id: 'hold', x: 50, y: 30, len: 38, thick: 3 },
-      // The fountain's split peak is now load-bearing: pull either half and the
+      // The fountain's split peak is load-bearing: pull either half and the
       // whole pour collapses straight down into the drifting black hole.
       { id: 'splitL', x: 43, y: 58, len: 20, thick: 3, angle: -0.42 },
       { id: 'splitR', x: 57, y: 58, len: 20, thick: 3, angle: 0.42 },
+      // The right stream parks on this shelf until you release it — and it can
+      // only get anywhere once the gate below has opened.
+      { id: 'shelf', x: 78, y: 86, len: 22, thick: 3 },
     ],
-    walls: [],
+    // Gate-on-fill: the right route stays sealed until the LEFT cup is full,
+    // so the finale is a genuine two-stage machine, not one tap.
+    walls: [{ x: 78, y: 108, w: 26, h: 3, gate: 'cl' }],
     emitters: [{ x: 50, y: 22, w: 22, h: 6, count: 32 }],
     cups: [
       { id: 'cl', x: 24, y: 130, w: 26, h: 20, need: 8 },
-      { id: 'cr', x: 76, y: 130, w: 26, h: 20, need: 8 },
+      { id: 'cr', x: 78, y: 130, w: 26, h: 20, need: 8 },
     ],
     hazards: [{ x: 50, y: 112, w: 14, h: 8, kind: 'void', moveX: 1.4, moveRange: 12 }],
-    stars: { pulls: [1, 1] },
-    solution: [{ pin: 'hold', atMs: 200 }],
+    stars: { pulls: [2, 3] },
+    solution: [
+      { pin: 'hold', atMs: 200 },
+      { pin: 'shelf', atMs: 4200 },
+    ],
     traps: ['splitL', 'splitR'],
   },
 ]
