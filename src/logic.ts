@@ -11,8 +11,8 @@ import type { LevelDef } from './types.ts'
  * solution and fails if a level now wastes more than its entry here.
  */
 const REF_WASTE: Record<number, number> = {
-  1: 0, 2: 6, 3: 6, 4: 5, 5: 0, 6: 0, 7: 2, 8: 14, 9: 16, 10: 0,
-  11: 5, 12: 0, 13: 8, 14: 26, 15: 0, 16: 0, 17: 0, 18: 5, 19: 0, 20: 2,
+  1: 0, 2: 6, 3: 6, 4: 5, 5: 0, 6: 0, 7: 2, 8: 7, 9: 10, 10: 0,
+  11: 5, 12: 0, 13: 8, 14: 13, 15: 0, 16: 0, 17: 0, 18: 5, 19: 20, 20: 2,
 }
 
 /** The pull-count axis: how tightly (few pulls) the level was solved. */

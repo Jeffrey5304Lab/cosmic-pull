@@ -179,20 +179,22 @@ export const LEVELS: LevelDef[] = [
     name: 'Sweeper',
     world: W,
     hint: '黑洞會來回移動，抓準空檔再拔栓',
-    // TODO(redesign): still a one-pin level — a monkey wins 100% of the time.
-    // The wall→trap-pin conversion that fixed L7/L20 does NOT apply here: these
-    // funnel walls aren't load-bearing, they're obstacles (pulling one lets MORE
-    // stardust through, 21 vs 13). Needs real geometry work, not a relabel.
-    pins: [{ id: 'a', x: 50, y: 36, len: 34, thick: 3 }],
-    walls: [
-      { x: 28, y: 66, w: 30, h: 3, angle: 0.5 },
-      { x: 72, y: 66, w: 30, h: 3, angle: -0.5 },
+    // Rebuilt: the cup used to sit directly under the pile, so the "funnel"
+    // walls were decoration (pulling one let MORE stardust through) and a
+    // monkey won 100% of the time. Now the cup is offset and the span is the
+    // only way across — with a void sweeping the gap underneath it.
+    hint: '黑洞在下面掃——斜橋是唯一的路，別拔它',
+    pins: [
+      { id: 'hold', x: 30, y: 42, len: 22, thick: 3 },
+      { id: 'span', x: 42, y: 74, len: 44, thick: 4, angle: 0.6 },
     ],
-    emitters: [{ x: 50, y: 26, w: 28, h: 8, count: 30 }],
-    cups: [{ id: 'c', x: 50, y: 132, w: 28, h: 16, need: 10 }],
-    hazards: [{ x: 50, y: 98, w: 14, h: 8, kind: 'void', moveX: 1.6, moveRange: 20 }],
+    walls: [],
+    emitters: [{ x: 30, y: 28, w: 18, h: 14, count: 26 }],
+    cups: [{ id: 'c', x: 76, y: 122, w: 22, h: 20, need: 12 }],
+    hazards: [{ x: 32, y: 122, w: 30, h: 10, kind: 'void', moveX: 1.4, moveRange: 10 }],
     stars: { pulls: [1, 1] },
-    solution: [{ pin: 'a', atMs: 200 }],
+    solution: [{ pin: 'hold', atMs: 200 }],
+    traps: ['span'],
   },
 
   // 9 ── funnel past a sweeping lava.
@@ -200,17 +202,25 @@ export const LEVELS: LevelDef[] = [
     id: 9,
     name: 'Hot Timing',
     world: W,
-    hint: '岩漿來回掃，趁空檔倒下去',
-    pins: [{ id: 'a', x: 50, y: 34, len: 26, thick: 3 }],
-    walls: [
-      { x: 30, y: 66, w: 30, h: 3, angle: 0.5 },
-      { x: 70, y: 66, w: 30, h: 3, angle: -0.5 },
+    // Mirror of L8 so the read flips (pour right→left) — plus a second shelf:
+    // the stream lands on 'shelf' and waits there until you drop it, so this
+    // level needs TWO deliberate pulls, not one.
+    hint: '岩漿來回掃。先放行，星塵會停在檯子上——抓準空檔再放它下去',
+    pins: [
+      { id: 'hold', x: 70, y: 42, len: 22, thick: 3 },
+      { id: 'span', x: 58, y: 74, len: 44, thick: 4, angle: -0.6 },
+      { id: 'shelf', x: 24, y: 104, len: 24, thick: 3 },
     ],
-    emitters: [{ x: 50, y: 22, w: 22, h: 12, count: 34 }],
-    cups: [{ id: 'c', x: 50, y: 132, w: 28, h: 16, need: 11 }],
-    hazards: [{ x: 50, y: 98, w: 16, h: 8, kind: 'lava', moveX: 1.5, moveRange: 22 }],
-    stars: { pulls: [1, 1] },
-    solution: [{ pin: 'a', atMs: 200 }],
+    walls: [],
+    emitters: [{ x: 70, y: 28, w: 18, h: 14, count: 30 }],
+    cups: [{ id: 'c', x: 24, y: 132, w: 24, h: 16, need: 12 }],
+    hazards: [{ x: 60, y: 124, w: 30, h: 9, kind: 'lava', moveX: 1.5, moveRange: 16 }],
+    stars: { pulls: [2, 2] },
+    solution: [
+      { pin: 'hold', atMs: 200 },
+      { pin: 'shelf', atMs: 3200 },
+    ],
+    traps: ['span'],
   },
 
   // 10 ── three cups, three pins.
@@ -335,20 +345,27 @@ export const LEVELS: LevelDef[] = [
     id: 14,
     name: 'Double Sweep',
     world: W,
-    hint: '兩個黑洞交錯移動，看準再拔',
-    pins: [{ id: 'a', x: 50, y: 32, len: 26, thick: 3 }],
-    walls: [
-      { x: 30, y: 60, w: 30, h: 3, angle: 0.5 },
-      { x: 70, y: 60, w: 30, h: 3, angle: -0.5 },
+    // Two-stage descent between two drifting voids: cross on the upper span,
+    // rest on the shelf, then drop. Both spans are load-bearing.
+    hint: '兩個黑洞交錯移動。橋撐著去路——分兩段走，看準再放',
+    pins: [
+      { id: 'hold', x: 28, y: 34, len: 22, thick: 3 },
+      { id: 'span', x: 42, y: 64, len: 42, thick: 4, angle: 0.6 },
+      { id: 'shelf', x: 76, y: 96, len: 22, thick: 3 },
     ],
-    emitters: [{ x: 50, y: 20, w: 22, h: 12, count: 36 }],
-    cups: [{ id: 'c', x: 50, y: 134, w: 30, h: 14, need: 10 }],
+    walls: [],
+    emitters: [{ x: 28, y: 20, w: 18, h: 14, count: 30 }],
+    cups: [{ id: 'c', x: 76, y: 132, w: 24, h: 16, need: 12 }],
     hazards: [
-      { x: 40, y: 92, w: 12, h: 7, kind: 'void', moveX: 1.7, moveRange: 16 },
-      { x: 60, y: 112, w: 12, h: 7, kind: 'void', moveX: 2.1, moveRange: 16 },
+      { x: 34, y: 96, w: 14, h: 7, kind: 'void', moveX: 1.7, moveRange: 14 },
+      { x: 50, y: 124, w: 16, h: 8, kind: 'void', moveX: 2.1, moveRange: 14 },
     ],
-    stars: { pulls: [1, 1] },
-    solution: [{ pin: 'a', atMs: 200 }],
+    stars: { pulls: [2, 2] },
+    solution: [
+      { pin: 'hold', atMs: 200 },
+      { pin: 'shelf', atMs: 3400 },
+    ],
+    traps: ['span'],
   },
 
   // 15 ── ordered release: clear the shelf before opening the flood.
@@ -481,17 +498,25 @@ export const LEVELS: LevelDef[] = [
     id: 19,
     name: 'Avalanche',
     world: W,
-    hint: '一次傾瀉——盡量別浪費',
-    pins: [{ id: 'a', x: 50, y: 36, len: 30, thick: 3 }],
-    walls: [
-      { x: 26, y: 70, w: 28, h: 3, angle: 0.5 },
-      { x: 74, y: 70, w: 28, h: 3, angle: -0.5 },
+    // A huge pour, but routed: the span carries the avalanche across the lava
+    // and the shelf holds it until you release it into the cup. Big volume AND
+    // real decisions (it used to be one pin with no hazard at all).
+    hint: '大傾瀉！斜橋撐著整條路——分兩段放，別讓它掉進岩漿',
+    pins: [
+      { id: 'hold', x: 28, y: 36, len: 24, thick: 3 },
+      { id: 'span', x: 44, y: 70, len: 46, thick: 4, angle: 0.6 },
+      { id: 'shelf', x: 78, y: 100, len: 22, thick: 3 },
     ],
-    emitters: [{ x: 50, y: 24, w: 24, h: 14, count: 40 }],
-    cups: [{ id: 'c', x: 50, y: 132, w: 30, h: 16, need: 21 }],
-    hazards: [],
-    stars: { pulls: [1, 1] },
-    solution: [{ pin: 'a', atMs: 200 }],
+    walls: [],
+    emitters: [{ x: 28, y: 22, w: 20, h: 14, count: 38 }],
+    cups: [{ id: 'c', x: 78, y: 132, w: 26, h: 16, need: 16 }],
+    hazards: [{ x: 34, y: 128, w: 34, h: 10, kind: 'lava' }],
+    stars: { pulls: [2, 2] },
+    solution: [
+      { pin: 'hold', atMs: 200 },
+      { pin: 'shelf', atMs: 3600 },
+    ],
+    traps: ['span'],
   },
 
   // 20 ── grand finale: a big fountain split, a drifting black hole in the
