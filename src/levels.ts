@@ -530,7 +530,6 @@ export const LEVELS: LevelDef[] = [
     id: 20,
     name: 'Grand Finale',
     world: W,
-    hint: '大噴泉分流，中間黑洞會移動、兩側是岩漿——穩穩落杯 ✦',
     hint: '終章 ✦ 分流、守住兩座橋，左杯滿了才會開門——最後再放行右邊',
     pins: [
       { id: 'hold', x: 50, y: 30, len: 38, thick: 3 },
