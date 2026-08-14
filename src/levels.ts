@@ -178,7 +178,6 @@ export const LEVELS: LevelDef[] = [
     id: 8,
     name: 'Sweeper',
     world: W,
-    hint: '黑洞會來回移動，抓準空檔再拔栓',
     // Rebuilt: the cup used to sit directly under the pile, so the "funnel"
     // walls were decoration (pulling one let MORE stardust through) and a
     // monkey won 100% of the time. Now the cup is offset and the span is the
