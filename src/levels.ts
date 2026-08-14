@@ -229,34 +229,31 @@ export const LEVELS: LevelDef[] = [
   // 10 ── three cups, three pins.
   {
     id: 10,
-    name: 'Three of a Kind',
+    name: 'Wrong Way Round',
     world: W,
-    hint: '三個杯子，全都要滿',
+    // RULE-BREAKER #2: the rote habit is "work top-to-bottom", and here that
+    // loses. Release the flood first and it lands on the pile still sitting on
+    // 'gate', blasting it off the sides into the lava. Drain the lower pile
+    // first, THEN send the flood down the empty channel.
+    hint: '由上往下拔？這關會害你——先把下面那堆放走，再開上面的洪水',
     pins: [
-      { id: 'l', x: 20, y: 40, len: 13, thick: 3 },
-      { id: 'm', x: 50, y: 40, len: 13, thick: 3 },
-      { id: 'r', x: 80, y: 40, len: 13, thick: 3 },
+      { id: 'top', x: 50, y: 26, len: 26, thick: 3 },
+      { id: 'gate', x: 50, y: 64, len: 22, thick: 3 },
     ],
-    walls: [
-      { x: 35, y: 90, w: 3, h: 60 },
-      { x: 65, y: 90, w: 3, h: 60 },
-    ],
+    walls: [],
     emitters: [
-      { x: 20, y: 28, w: 11, h: 12, count: 13 },
-      { x: 50, y: 28, w: 11, h: 12, count: 13 },
-      { x: 80, y: 28, w: 11, h: 12, count: 13 },
+      { x: 50, y: 14, w: 22, h: 10, count: 20 },
+      { x: 50, y: 52, w: 18, h: 10, count: 16 },
     ],
-    cups: [
-      { id: 'cl', x: 19, y: 126, w: 18, h: 20, need: 7 },
-      { id: 'cm', x: 50, y: 126, w: 18, h: 20, need: 7 },
-      { id: 'cr', x: 81, y: 126, w: 18, h: 20, need: 7 },
+    cups: [{ id: 'c', x: 50, y: 128, w: 24, h: 18, need: 26 }],
+    hazards: [
+      { x: 16, y: 120, w: 30, h: 10, kind: 'lava' },
+      { x: 84, y: 120, w: 30, h: 10, kind: 'lava' },
     ],
-    hazards: [],
-    stars: { pulls: [3, 3] },
+    stars: { pulls: [2, 2] },
     solution: [
-      { pin: 'l', atMs: 200 },
-      { pin: 'm', atMs: 350 },
-      { pin: 'r', atMs: 500 },
+      { pin: 'gate', atMs: 200 },
+      { pin: 'top', atMs: 3000 },
     ],
   },
 

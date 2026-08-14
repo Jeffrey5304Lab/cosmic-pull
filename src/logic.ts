@@ -11,7 +11,7 @@ import type { LevelDef } from './types.ts'
  * solution and fails if a level now wastes more than its entry here.
  */
 const REF_WASTE: Record<number, number> = {
-  1: 0, 2: 6, 3: 6, 4: 5, 5: 0, 6: 0, 7: 2, 8: 7, 9: 10, 10: 0,
+  1: 0, 2: 6, 3: 6, 4: 5, 5: 0, 6: 0, 7: 2, 8: 7, 9: 10, 10: 3,
   11: 5, 12: 2, 13: 8, 14: 13, 15: 0, 16: 0, 17: 0, 18: 5, 19: 20, 20: 5,
 }
 
