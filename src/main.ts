@@ -45,6 +45,7 @@ let dripCooldown = 0
 let shake = 0 // screenshake magnitude (world units), decays each frame
 let flash = 0 // golden full-screen flash (0–1), decays each frame
 let stuckShown = false // gentle "no flow left" cue already surfaced this attempt
+let winPending = 0 // ms since the win was locked in; lets the pour finish first
 const fullCups = new Set<string>() // cups that have already popped their "filled" burst
 // Respect the OS "reduce motion" setting: skip screenshake + the golden flash.
 const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
@@ -65,6 +66,7 @@ function loadLevel(id: number): void {
   shake = 0
   flash = 0
   stuckShown = false
+  winPending = 0
   fullCups.clear()
   hoverPin = null
   el.btnRestart.classList.remove('nudge')
@@ -153,7 +155,7 @@ function frame(now: number): void {
   particles.update(dt)
   shake *= Math.pow(0.001, dt / 1000) // smooth exponential decay
 
-  if (!resolved) checkResolution()
+  if (!resolved) checkResolution(dt)
 
   // cozy dead-end: nothing can flow anymore — nudge a retry (never auto-lose)
   if (!resolved && !stuckShown && sim.stuck) {
@@ -222,18 +224,27 @@ function drawVignette(w: number, h: number): void {
   ctx.fillRect(0, 0, w, h)
 }
 
-function checkResolution(): void {
+function checkResolution(dt: number): void {
   if (sim.status !== 'playing') showHint(undefined) // clear any lingering coaching toast
   if (sim.status === 'won') {
-    resolved = true
-    const stars = computeStars(sim.level, sim.pulls, sim.wasted)
-    progress = recordWin(progress, currentId, stars, LEVEL_COUNT)
-    audio.sfxWin()
-    haptics.notifyWin()
-    shake = 1.6
-    flash = 0.7
-    for (const c of sim.cupViews) particles.celebrate(c.def.x, c.def.y - c.def.h / 2)
-    setTimeout(() => showWin(stars), 550)
+    if (winPending === 0) {
+      // Lock in the result and fire the celebration on the very first frame…
+      lastStars = computeStars(sim.level, sim.pulls, sim.wasted)
+      progress = recordWin(progress, currentId, lastStars, LEVEL_COUNT)
+      audio.sfxWin()
+      haptics.notifyWin()
+      shake = 1.6
+      flash = 0.7
+      for (const c of sim.cupViews) particles.celebrate(c.def.x, c.def.y - c.def.h / 2)
+    }
+    // …but keep simulating so stardust still in the air finishes pouring. We
+    // used to freeze physics instantly, which cut the pour off mid-flight and
+    // slammed the result card over a stopped board.
+    winPending += dt
+    if (winPending > 2200 || sim.activeGrains === 0) {
+      resolved = true
+      showWin(lastStars)
+    }
   } else if (sim.status === 'lost') {
     resolved = true
     audio.sfxLose()
