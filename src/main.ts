@@ -8,7 +8,7 @@ import { computeStars, earnedStardust } from './logic.ts'
 import { addStardust, loadProgress, pickTheme, recordWin, saveProgress, totalStars, type Progress } from './storage.ts'
 import { shareResult } from './sharecard.ts'
 import { applyI18n, hintFor, pullsLabel, t } from './i18n.ts'
-import { AD_REWARD, adsAvailable, initAds, showRewarded } from './ads.ts'
+import { AD_REWARD, adsAvailable, initAds, privacyOptionsAvailable, showPrivacyOptions, showRewarded } from './ads.ts'
 import * as audio from './audio.ts'
 import * as haptics from './haptics.ts'
 
@@ -54,6 +54,7 @@ let dripCooldown = 0
 let shake = 0 // screenshake magnitude (world units), decays each frame
 let flash = 0 // golden full-screen flash (0–1), decays each frame
 let stuckShown = false // gentle "no flow left" cue already surfaced this attempt
+let hintPin: string | null = null // solution pin revealed by a rewarded "hint" ad
 let winPending = 0 // ms since the win was locked in; lets the pour finish first
 let winAt = 0 // performance.now() when the win locked in; drives the constellation reveal
 const fullCups = new Set<string>() // cups that have already popped their "filled" burst
@@ -63,6 +64,7 @@ let floaterCd = 0 // throttle for the "+N ✦" currency pops
 const floaters: { x: number; y: number; vy: number; life: number; max: number; n: number }[] = []
 // Respect the OS "reduce motion" setting: skip screenshake + the golden flash.
 const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+renderer.setReduceMotion(reduceMotion) // calm the decorative canvas animation too
 
 audio.setMuted(progress.muted)
 updateSoundBtn()
@@ -101,6 +103,8 @@ function loadLevel(id: number): void {
   shake = 0
   flash = 0
   stuckShown = false
+  hintPin = null
+  $('hint-ad').classList.add('hidden')
   winPending = 0
   winAt = 0
   fullCups.clear()
@@ -149,12 +153,25 @@ function showStuck(): void {
   el.hint.classList.remove('hidden')
   el.hint.style.opacity = '1'
   el.btnRestart.classList.add('nudge')
+  // A genuinely useful ad moment: the player is stuck and wants help (the
+  // industry's best-performing rewarded placement is exactly this).
+  if (adsAvailable() && !hintPin) $('hint-ad').classList.remove('hidden')
 }
 
 function clearStuck(): void {
   el.btnRestart.classList.remove('nudge')
   if (stuckShown) showHint(undefined)
   stuckShown = false
+  $('hint-ad').classList.add('hidden')
+}
+
+/** The next pin in the level's intended solution that hasn't been pulled yet. */
+function nextSolutionPin(): string | null {
+  const sol = sim.level.solution
+  if (!sol) return null
+  const live = new Set(sim.pinViews.map((p) => p.id))
+  for (const s of [...sol].sort((a, b) => a.atMs - b.atMs)) if (live.has(s.pin)) return s.pin
+  return null
 }
 
 function hideAllOverlays(): void {
@@ -244,10 +261,10 @@ function frame(now: number): void {
     }
   }
 
-  // drive the floating reward pops
+  // drive the floating reward pops (they hold still under reduce-motion)
   for (const f of floaters) {
     f.life += dt / 1000
-    f.y += (f.vy * dt) / 1000
+    if (!reduceMotion) f.y += (f.vy * dt) / 1000
   }
   for (let i = floaters.length - 1; i >= 0; i--) if (floaters[i].life >= floaters[i].max) floaters.splice(i, 1)
 
@@ -280,7 +297,7 @@ function frame(now: number): void {
     t.oy += (Math.random() - 0.5) * shake * t.scale
   }
   // gentle onboarding: point at the pin on level 1 until the first pull
-  const coach = currentId === 1 && sim.pulls === 0 && !resolved ? (sim.pinViews[0]?.id ?? null) : null
+  const coach = hintPin ?? (currentId === 1 && sim.pulls === 0 && !resolved ? (sim.pinViews[0]?.id ?? null) : null)
   renderer.draw(sim, t, now, resolved ? null : hoverPin, coach, winProgress)
   // particles + reward floaters share the world transform, drawn on top
   ctx.save()
@@ -384,6 +401,12 @@ function showWin(stars: number, reward = 0): void {
   el.winReward.classList.remove('pop')
   void el.winReward.offsetWidth // restart the pop animation
   el.winReward.classList.add('pop')
+  // Rewarded ad at the moment of success — the highest-intent, least-intrusive
+  // placement for a cozy game (we rarely fail, so a "continue" ad wouldn't fire).
+  const dbl = $<HTMLButtonElement>('win-double')
+  dbl.classList.toggle('hidden', !(adsAvailable() && reward > 0))
+  dbl.disabled = false
+  dbl.textContent = t('double_reward')
   const isLast = currentId >= LEVEL_COUNT
   ;($('win-next') as HTMLButtonElement).textContent = isLast ? t('menu') : t('next')
   el.win.classList.remove('hidden')
@@ -446,6 +469,8 @@ function openShop(): void {
   hideAllOverlays()
   renderShop()
   $('shop-ad').classList.toggle('hidden', !adsAvailable()) // only where ads exist
+  // GDPR: let users revisit their consent choice (promised in the privacy policy)
+  $('shop-privacy').classList.toggle('hidden', !privacyOptionsAvailable())
   el.shop.classList.remove('hidden')
 }
 
@@ -518,6 +543,43 @@ $('btn-menu').addEventListener('click', openMenu)
 $('menu-close').addEventListener('click', () => el.menu.classList.add('hidden'))
 $('btn-shop').addEventListener('click', openShop)
 $('shop-close').addEventListener('click', openMenu) // Back → the level map
+$('shop-privacy').addEventListener('click', () => void showPrivacyOptions())
+$('hint-ad').addEventListener('click', () => {
+  const btn = $<HTMLButtonElement>('hint-ad')
+  btn.disabled = true
+  void showRewarded().then((ok) => {
+    btn.disabled = false
+    if (!ok) {
+      btn.textContent = t('ad_unavailable')
+      window.setTimeout(() => (btn.textContent = t('hint_ad')), 1600)
+      return
+    }
+    hintPin = nextSolutionPin() // the coach arrow now points at the right peg
+    btn.classList.add('hidden')
+  })
+})
+$('win-double').addEventListener('click', () => {
+  const btn = $<HTMLButtonElement>('win-double')
+  btn.disabled = true
+  void showRewarded().then((ok) => {
+    if (!ok) {
+      btn.textContent = t('ad_unavailable')
+      window.setTimeout(() => {
+        btn.textContent = t('double_reward')
+        btn.disabled = false
+      }, 1600)
+      return
+    }
+    progress = addStardust(progress, lastReward) // pay the same amount again = ×2
+    lastReward *= 2
+    el.winReward.textContent = `✦ +${lastReward}   ·   ✦ ${progress.stardust}`
+    el.winReward.classList.remove('pop')
+    void el.winReward.offsetWidth
+    el.winReward.classList.add('pop')
+    btn.classList.add('hidden') // one double per level
+    audio.sfxStar(2)
+  })
+})
 $('shop-ad').addEventListener('click', () => {
   const btn = $<HTMLButtonElement>('shop-ad')
   btn.disabled = true
