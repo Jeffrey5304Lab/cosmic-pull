@@ -9,3 +9,6 @@ android
 
 # release env (contains live AdMob flag)
 .env.release
+
+# generated screenshots (dev harness)
+docs/shots/

@@ -6,8 +6,14 @@
 let ctx: AudioContext | null = null
 let muted = false
 
+/** Ambient pad level when playing (kept very low — cozy, never in the way). */
+const AMB_LEVEL = 0.022
+let ambGain: GainNode | null = null
+
 export function setMuted(m: boolean): void {
   muted = m
+  // live-toggle the ambient bed so the ♪ button silences/restores it instantly
+  if (ambGain && ctx) ambGain.gain.setTargetAtTime(m ? 0.0001 : AMB_LEVEL, ctx.currentTime, 0.3)
 }
 export function isMuted(): boolean {
   return muted
@@ -68,4 +74,111 @@ export function sfxStar(index: number): void {
 /** Muted thud on fail. */
 export function sfxLose(): void {
   blip(180, 0.3, 'sine', 0.06, 90)
+}
+
+// ── continuous pour bed ───────────────────────────────────────
+// A soft granular shimmer that plays *while stardust is flowing* and rises in
+// pitch as the cups fill — the slot-machine "almost there" tension that makes a
+// pour feel like the main event, not an afterthought (see docs/GAME-DIRECTION).
+// Synthesized from filtered noise: zero assets, cozy, never a harsh loop.
+let pourFilter: BiquadFilterNode | null = null
+let pourGain: GainNode | null = null
+
+function ensurePour(c: AudioContext): boolean {
+  if (pourGain) return true
+  try {
+    // 1s of white noise, looped — the "hiss" of pouring grains. The looping
+    // source stays alive via its graph connections, so we don't keep a handle.
+    const buf = c.createBuffer(1, c.sampleRate, c.sampleRate)
+    const data = buf.getChannelData(0)
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.5
+    const src = c.createBufferSource()
+    src.buffer = buf
+    src.loop = true
+    const filt = c.createBiquadFilter()
+    filt.type = 'bandpass'
+    filt.frequency.value = 500
+    filt.Q.value = 3.5 // a little resonance → shimmer, not static
+    const g = c.createGain()
+    g.gain.value = 0.0001
+    src.connect(filt).connect(g).connect(c.destination)
+    src.start()
+    pourFilter = filt
+    pourGain = g
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Drive the pour bed each frame.
+ * @param active   is stardust currently flowing?
+ * @param fillRatio overall cup-fill 0..1 → maps to rising pitch
+ * @param intensity how much is flowing 0..1 → maps to loudness
+ */
+export function pourUpdate(active: boolean, fillRatio: number, intensity: number): void {
+  const c = ac()
+  if (!c) {
+    // Muted (or no audio): make sure any lingering bed is silenced.
+    if (pourGain) pourGain.gain.setTargetAtTime(0.0001, (ctx as AudioContext).currentTime, 0.05)
+    return
+  }
+  if (!ensurePour(c)) return
+  const now = c.currentTime
+  const target = active ? 0.012 + Math.min(1, intensity) * 0.05 : 0.0001
+  pourGain!.gain.setTargetAtTime(target, now, 0.09)
+  const freq = 360 + Math.min(1, Math.max(0, fillRatio)) * 1150
+  pourFilter!.frequency.setTargetAtTime(freq, now, 0.12)
+}
+
+/** Silence the pour bed immediately (level change / win / lose). */
+export function pourStop(): void {
+  if (pourGain && ctx) pourGain.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.04)
+}
+
+// ── ambient pad ───────────────────────────────────────────────
+// A soft, non-melodic drone chord that just breathes under the game — the cozy
+// "you can sit here as long as you like" bed (Water Sort's calm-atmosphere
+// retention lever). Pure synthesis, one slow filter LFO for gentle movement.
+function ensureAmbient(c: AudioContext): boolean {
+  if (ambGain) return true
+  try {
+    const master = c.createGain()
+    master.gain.value = 0.0001
+    const lp = c.createBiquadFilter()
+    lp.type = 'lowpass'
+    lp.frequency.value = 600
+    // slow filter sweep so the pad shimmers instead of sitting static
+    const lfo = c.createOscillator()
+    lfo.frequency.value = 0.06
+    const lfoGain = c.createGain()
+    lfoGain.gain.value = 150
+    lfo.connect(lfoGain).connect(lp.frequency)
+    lfo.start()
+    // a warm, wide A-minor-ish drone (root / fifth / octave), lightly detuned
+    for (const f of [110, 164.81, 220]) {
+      const o = c.createOscillator()
+      o.type = 'sine'
+      o.frequency.value = f
+      o.detune.value = (Math.random() - 0.5) * 7
+      const og = c.createGain()
+      og.gain.value = 0.33
+      o.connect(og).connect(lp)
+      o.start()
+    }
+    lp.connect(master).connect(c.destination)
+    ambGain = master
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** Start the ambient bed (idempotent). Call after the first user gesture. */
+export function ambientStart(): void {
+  const c = ac()
+  if (!c) return
+  if (!ensureAmbient(c)) return
+  ambGain!.gain.setTargetAtTime(AMB_LEVEL, c.currentTime, 1.2) // fade in gently
 }

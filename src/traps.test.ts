@@ -14,7 +14,7 @@ describe('trap pins have real teeth (pulling one loses the level)', () => {
 
   for (const level of trapped) {
     for (const trap of level.traps!) {
-      it(`level ${level.id} "${level.name}": pulling trap "${trap}" fails`, () => {
+      it(`level ${level.id} "${level.name}": pulling trap "${trap}" makes it unwinnable`, () => {
         const sim = new GameSim(level)
         // Play the intended solution but ALSO pull the trap up front.
         sim.pull(trap)
@@ -26,7 +26,14 @@ describe('trap pins have real teeth (pulling one loses the level)', () => {
           sim.step(PHYS.stepMs)
           t += PHYS.stepMs
         }
-        expect(sim.status, `expected LOSS after pulling trap ${trap}, got '${sim.status}'`).toBe('lost')
+        // Teeth = the level can no longer be won. That shows up either as an
+        // outright loss, or as a board that has run dry and frozen short of the
+        // target (which the UI surfaces as a "tap ↻" nudge). Both are a failed
+        // run; only a win would mean the trap was toothless. To be sure no
+        // recovery exists, exhaust every remaining pull too.
+        for (const p of level.pins) sim.pull(p.id)
+        for (let i = 0; i < 900 && sim.status === 'playing'; i++) sim.step(PHYS.stepMs)
+        expect(sim.status, `trap ${trap} was toothless — the level was still winnable`).not.toBe('won')
       })
     }
   }

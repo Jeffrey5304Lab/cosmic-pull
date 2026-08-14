@@ -19,6 +19,12 @@ export interface PinDef {
   thick: number
   /** rotation in radians (0 = horizontal) */
   angle?: number
+  /**
+   * Chain reaction: pulling this pin also auto-removes these pin ids after a
+   * short beat (they are NOT counted as player pulls). Enables sequencing
+   * puzzles — "pull one, a cascade follows". Chains may nest.
+   */
+  releases?: string[]
 }
 
 /** A fixed obstacle: ink-drawn wall/ledge. Never removable. */
@@ -30,6 +36,12 @@ export interface WallDef {
   angle?: number
   /** decorative rounded look only; physics uses the rectangle */
   round?: boolean
+  /**
+   * Gate: this wall stays solid until the cup with this id is filled, then it
+   * opens (is removed) and whatever it held flows. Enables multi-step
+   * dependency puzzles ("fill A to open the path to B").
+   */
+  gate?: string
 }
 
 /** Where stardust starts. A pre-placed pile of `count` grains. */
@@ -85,6 +97,14 @@ export interface LevelDef {
   cups: CupDef[]
   hazards: HazardDef[]
   stars?: StarRule
+  /**
+   * Marks a "✦ 星雲試煉" challenge peak — a level that genuinely defeats the
+   * rote rule (verified in rote.test.ts). Surfaced in the UI so a harder level
+   * reads as an *intentional* spike ("this one's meant to make you think"),
+   * which is what keeps difficulty feeling fair rather than like a gotcha. Most
+   * levels are cozy/unmarked; spikes are the ~20% peaks of the cadence.
+   */
+  spike?: boolean
   /** one-line coaching shown the first time a mechanic appears */
   hint?: string
   /**

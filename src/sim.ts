@@ -2,7 +2,7 @@ import Matter from 'matter-js'
 import { PHYS } from './config.ts'
 import type { CupDef, HazardDef, LevelDef, PinDef, SimEvent, SimStatus, StardustColor } from './types.ts'
 
-const { Engine, World, Bodies, Body, Composite, Events } = Matter
+const { Engine, World, Bodies, Body, Composite, Events, Sleeping } = Matter
 
 /**
  * matter-js is tuned for pixel-scale bodies; our authoring world is only
@@ -11,6 +11,14 @@ const { Engine, World, Bodies, Body, Composite, Events } = Matter
  * Nothing outside this file needs to know.
  */
 const SCALE = 6
+
+/** Net displacement (WORLD units) a grain must drift before the board counts as
+ *  "active" again — above resting jitter, below any real slide. */
+const REST_EPS = 0.35
+/** How long the board must stay quiescent before we call it stuck (ms). */
+const STUCK_HOLD_MS = 800
+/** Beat between pulling a chain pin and its `releases` auto-popping. */
+const CHAIN_DELAY_MS = 260
 
 // Collision categories (bit flags).
 const CAT = {
@@ -23,6 +31,10 @@ const CAT = {
 interface Grain {
   body: Matter.Body
   color: StardustColor
+  /** rest anchor: last position where this grain was "settled" (physics units).
+   *  Used for jitter-robust quiescence (net displacement, not noisy velocity). */
+  ax?: number
+  ay?: number
 }
 
 interface CupRuntime {
@@ -51,6 +63,12 @@ export class GameSim {
   pulls = 0
   wasted = 0
   private settleHoldMs = 0
+  /** ms the whole board has been quiescent (no grain drifting past REST_EPS). */
+  private quietMs = 0
+  /** sim-time clock (ms), used to fire scheduled chain-pin releases. */
+  private clockMs = 0
+  /** chain pins queued to auto-release: {pin id, when in clockMs}. */
+  private pendingReleases: { id: string; atMs: number }[] = []
 
   /**
    * FX events (WORLD units) accumulated since the last `drainEvents()`. The
@@ -62,12 +80,18 @@ export class GameSim {
   private grains: Grain[] = []
   private cups: CupRuntime[] = []
   private hazards: HazardRuntime[] = []
+  /** gate walls: removed once their `cupId` fills, opening a held path. */
+  private gates: { body: Matter.Body; cupId: string; open: boolean }[] = []
   private toCollect: { grain: Grain; cup: CupRuntime }[] = []
   private toWaste = new Map<Matter.Body, HazardDef['kind']>()
 
   constructor(level: LevelDef) {
     this.level = level
-    this.engine = Engine.create()
+    // Sleeping: resting piles freeze completely (no micro-jitter/creep). This
+    // is what makes the quiescence/stuck detection reliable — and saves CPU.
+    // Gotcha: removing a static pin does NOT wake bodies sleeping on it, so
+    // pull() wakes every grain manually.
+    this.engine = Engine.create({ enableSleeping: true })
     this.engine.gravity.y = PHYS.gravityY
     this.build()
     this.wireCollisions()
@@ -91,14 +115,17 @@ export class GameSim {
     }
     Composite.add(this.engine.world, bounds)
 
-    for (const wd of this.level.walls) this.addWall(wd)
+    for (const wd of this.level.walls) {
+      const body = this.addWall(wd)
+      if (wd.gate) this.gates.push({ body, cupId: wd.gate, open: false })
+    }
     for (const pd of this.level.pins) this.addPin(pd)
     for (const cd of this.level.cups) this.addCup(cd)
     for (const hd of this.level.hazards) this.addHazard(hd)
     for (const em of this.level.emitters) this.spawnEmitter(em)
   }
 
-  private addWall(wd: { x: number; y: number; w: number; h: number; angle?: number }): void {
+  private addWall(wd: { x: number; y: number; w: number; h: number; angle?: number }): Matter.Body {
     const b = Bodies.rectangle(wd.x * SCALE, wd.y * SCALE, wd.w * SCALE, wd.h * SCALE, {
       isStatic: true,
       angle: wd.angle ?? 0,
@@ -108,6 +135,21 @@ export class GameSim {
     b.collisionFilter = { group: 0, category: CAT.wall, mask: CAT.grain }
     b.label = 'wall'
     Composite.add(this.engine.world, b)
+    return b
+  }
+
+  /** Open any gate whose cup has just filled — removes the wall so the stream it
+   *  held can flow. Wakes grains so a slept pile above it drops. */
+  private processGates(): void {
+    for (const gate of this.gates) {
+      if (gate.open) continue
+      const cup = this.cups.find((c) => c.def.id === gate.cupId)
+      if (!cup || cup.filled < cup.def.need) continue
+      gate.open = true
+      World.remove(this.engine.world, gate.body)
+      this.quietMs = 0
+      for (const g of this.grains) Sleeping.set(g.body, false)
+    }
   }
 
   private addPin(pd: PinDef): void {
@@ -242,6 +284,14 @@ export class GameSim {
       return
     }
 
+    // fire any chain-pin releases whose beat has elapsed (auto, not a player pull)
+    this.clockMs += dtMs
+    if (this.pendingReleases.length) {
+      const due = this.pendingReleases.filter((r) => r.atMs <= this.clockMs)
+      this.pendingReleases = this.pendingReleases.filter((r) => r.atMs > this.clockMs)
+      for (const r of due) this.removePin(r.id, false)
+    }
+
     for (const hz of this.hazards) {
       if (hz.def.moveX && hz.def.moveRange) {
         hz.phase += (dtMs / 1000) * hz.def.moveX
@@ -273,6 +323,7 @@ export class GameSim {
     }
     this.toWaste.clear()
 
+    this.processGates() // open any gate whose cup just filled
     this.reap()
     this.evaluate(dtMs)
   }
@@ -288,6 +339,7 @@ export class GameSim {
   }
 
   private evaluate(dtMs: number): void {
+    this.trackQuiescence(dtMs)
     const remaining = this.cups.reduce((s, c) => s + Math.max(0, c.def.need - c.filled), 0)
     if (remaining === 0) {
       this.settleHoldMs += dtMs
@@ -299,6 +351,56 @@ export class GameSim {
     if (this.pulls > 0 && remaining > this.grains.length) this.status = 'lost'
   }
 
+  /** Jitter-robust "has the board gone still?" — a resting pile still velocity-
+   *  jitters, so we track *net displacement* from each grain's rest anchor.
+   *  A grain that drifts past REST_EPS re-anchors and counts the board as active. */
+  private trackQuiescence(dtMs: number): void {
+    const eps = REST_EPS * SCALE
+    let active = this.grains.length === 0
+    for (const g of this.grains) {
+      const p = g.body.position
+      if (g.ax === undefined) {
+        g.ax = p.x
+        g.ay = p.y
+        active = true
+        continue
+      }
+      if (Math.hypot(p.x - g.ax, p.y - g.ay!) > eps) {
+        g.ax = p.x
+        g.ay = p.y
+        active = true
+      }
+    }
+    this.quietMs = active ? 0 : this.quietMs + dtMs
+  }
+
+  /** True when the board can no longer progress and the player must retry:
+   *  cups unfilled, everything has come to rest, and no un-pulled pin is still
+   *  holding grains (so no remaining pull could ever mobilise the pile). Cozy
+   *  design: this drives a gentle "tap ↻" cue, NOT an automatic loss. */
+  get stuck(): boolean {
+    if (this.status !== 'playing' || this.pulls === 0) return false
+    if (this.quietMs < STUCK_HOLD_MS) return false
+    const remaining = this.cups.reduce((s, c) => s + Math.max(0, c.def.need - c.filled), 0)
+    if (remaining === 0) return false
+    return !this.anyPinHoldingGrain()
+  }
+
+  /** Any un-pulled pin with a grain resting against it? If so, pulling it can
+   *  still change the board (free a pile, or drop a bridged stream — sometimes
+   *  into a cup!), so this is not a dead end. Only when NO pin touches any
+   *  grain is the board provably frozen: pins interact with nothing else, so no
+   *  remaining pull can move a single grain. */
+  private anyPinHoldingGrain(): boolean {
+    const reach = (PHYS.grainR + 0.8) * SCALE
+    for (const [, pin] of this.pins) {
+      for (const g of this.grains) {
+        if (distToBody(pin, g.body.position.x, g.body.position.y) < reach) return true
+      }
+    }
+    return false
+  }
+
   private removeGrain(g: Grain): boolean {
     const i = this.grains.indexOf(g)
     if (i < 0) return false
@@ -308,18 +410,36 @@ export class GameSim {
   }
 
   // ── player actions ──────────────────────────────────────────
+  /** Player taps a pin. Chain releases (`removePin`) don't go through here so
+   *  they never inflate the pull count. */
   pull(id: string): boolean {
+    if (this.status !== 'playing') return false
+    return this.removePin(id, true)
+  }
+
+  /** Remove a pin from the world. Shared by player pulls (`countAsPull`) and
+   *  automatic chain releases. Removing a pin's `releases` are scheduled to pop
+   *  after a short beat, enabling sequencing puzzles. */
+  private removePin(id: string, countAsPull: boolean): boolean {
     const body = this.pins.get(id)
-    if (!body || this.status !== 'playing') return false
+    if (!body) return false
     this.pins.delete(id)
     World.remove(this.engine.world, body)
-    this.pulls++
+    if (countAsPull) this.pulls++
+    this.quietMs = 0 // a pull re-mobilises the pile; don't carry stale stillness
+    // matter-js does not wake sleeping bodies when a static support vanishes —
+    // without this, a slept pile hangs in mid-air after its pin is pulled.
+    for (const g of this.grains) Sleeping.set(g.body, false)
     this.events.push({
       type: 'pull',
       x: body.position.x / SCALE,
       y: body.position.y / SCALE,
       angle: body.angle,
     })
+    const releases = this.level.pins.find((p) => p.id === id)?.releases
+    if (releases) {
+      for (const rid of releases) this.pendingReleases.push({ id: rid, atMs: this.clockMs + CHAIN_DELAY_MS })
+    }
     return true
   }
 

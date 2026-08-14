@@ -93,30 +93,29 @@ export const LEVELS: LevelDef[] = [
     traps: ['bl', 'br'],
   },
 
-  // 5 ── order matters: pull the drain plug before the flood.
+  // 5 ── THE RULE-BREAKER. By now the player has learned "pull the flat one,
+  //      never the slanted one" (L3/L4) — and that rule LOSES here: this ramp
+  //      doesn't bridge anything, it dumps into the lava. The cup is straight
+  //      down, so you must clear the ramp away FIRST, then release the pile.
+  //      Without levels like this the whole game is solvable by rote.
   {
     id: 5,
-    name: 'Order of Things',
+    name: 'The False Bridge',
+    spike: true,
     world: W,
-    hint: '先後順序會影響結果，多想一步',
+    hint: '斜的不一定是橋——先看清楚它通到哪裡',
     pins: [
-      { id: 'gate', x: 50, y: 60, len: 26, thick: 3 },
-      { id: 'top', x: 50, y: 30, len: 26, thick: 3 },
+      { id: 'slide', x: 62, y: 74, len: 40, thick: 4, angle: 0.6 },
+      { id: 'hold', x: 50, y: 40, len: 26, thick: 3 },
     ],
-    walls: [
-      { x: 30, y: 90, w: 30, h: 3, angle: 0.5 },
-      { x: 70, y: 90, w: 30, h: 3, angle: -0.5 },
-    ],
-    emitters: [{ x: 50, y: 20, w: 22, h: 10, count: 28 }],
-    cups: [{ id: 'c', x: 50, y: 128, w: 22, h: 18, need: 15 }],
-    hazards: [
-      { x: 14, y: 108, w: 16, h: 8, kind: 'lava' },
-      { x: 86, y: 108, w: 16, h: 8, kind: 'lava' },
-    ],
+    walls: [],
+    emitters: [{ x: 50, y: 28, w: 20, h: 10, count: 17 }],
+    cups: [{ id: 'c', x: 50, y: 128, w: 26, h: 20, need: 13 }],
+    hazards: [{ x: 86, y: 126, w: 28, h: 10, kind: 'lava' }],
     stars: { pulls: [2, 2] },
     solution: [
-      { pin: 'top', atMs: 200 },
-      { pin: 'gate', atMs: 1400 },
+      { pin: 'slide', atMs: 200 },
+      { pin: 'hold', atMs: 900 },
     ],
   },
 
@@ -125,26 +124,32 @@ export const LEVELS: LevelDef[] = [
     id: 6,
     name: 'True Colours',
     world: W,
-    hint: '顏色要對！只有相符的星塵會被杯子收下',
+    // Each colour rides its own span out to its matching cup, with lava down
+    // the middle. Pull a span and that colour is gone — and only that colour
+    // can fill its cup, so it's unrecoverable.
+    hint: '顏色要對！每種顏色都靠自己那座橋出去——拔掉就再也補不回來',
     pins: [
-      { id: 'g', x: 28, y: 40, len: 26, thick: 3 },
-      { id: 'r', x: 72, y: 40, len: 26, thick: 3 },
+      { id: 'g', x: 34, y: 36, len: 22, thick: 3 },
+      { id: 'r', x: 66, y: 36, len: 22, thick: 3 },
+      { id: 'bg', x: 30, y: 72, len: 38, thick: 4, angle: -0.55 },
+      { id: 'br', x: 70, y: 72, len: 38, thick: 4, angle: 0.55 },
     ],
-    walls: [{ x: 50, y: 62, w: 3, h: 34 }],
+    walls: [],
     emitters: [
-      { x: 28, y: 28, w: 20, h: 10, count: 18, color: 'gold' },
-      { x: 72, y: 28, w: 20, h: 10, count: 18, color: 'rose' },
+      { x: 34, y: 24, w: 18, h: 10, count: 20, color: 'gold' },
+      { x: 66, y: 24, w: 18, h: 10, count: 20, color: 'rose' },
     ],
     cups: [
-      { id: 'cg', x: 26, y: 122, w: 22, h: 20, need: 10, color: 'gold' },
-      { id: 'cr', x: 74, y: 122, w: 22, h: 20, need: 10, color: 'rose' },
+      { id: 'cg', x: 14, y: 124, w: 22, h: 20, need: 10, color: 'gold' },
+      { id: 'cr', x: 86, y: 124, w: 22, h: 20, need: 10, color: 'rose' },
     ],
-    hazards: [],
+    hazards: [{ x: 50, y: 126, w: 28, h: 10, kind: 'lava' }],
     stars: { pulls: [2, 2] },
     solution: [
       { pin: 'g', atMs: 200 },
       { pin: 'r', atMs: 400 },
     ],
+    traps: ['bg', 'br'],
   },
 
   // 7 ── fountain: one pile splits over a peak into two cups. One pull, but the
@@ -154,11 +159,14 @@ export const LEVELS: LevelDef[] = [
     name: 'Fountain',
     world: W,
     hint: '星塵撞上尖頂會往兩邊分流，兩杯都要滿',
-    pins: [{ id: 'hold', x: 50, y: 32, len: 38, thick: 3 }],
-    walls: [
-      { x: 43, y: 60, w: 20, h: 3, angle: -0.42 },
-      { x: 57, y: 60, w: 20, h: 3, angle: 0.42 },
+    pins: [
+      { id: 'hold', x: 50, y: 32, len: 38, thick: 3 },
+      // The peak that fans the fountain is pullable — and load-bearing. Take a
+      // half away and that side's stream drops straight into the void.
+      { id: 'peakL', x: 43, y: 60, len: 20, thick: 3, angle: -0.42 },
+      { id: 'peakR', x: 57, y: 60, len: 20, thick: 3, angle: 0.42 },
     ],
+    walls: [],
     emitters: [{ x: 50, y: 24, w: 22, h: 6, count: 30 }],
     cups: [
       { id: 'cl', x: 24, y: 128, w: 26, h: 20, need: 8 },
@@ -167,6 +175,7 @@ export const LEVELS: LevelDef[] = [
     hazards: [{ x: 50, y: 116, w: 12, h: 9, kind: 'void' }],
     stars: { pulls: [1, 1] },
     solution: [{ pin: 'hold', atMs: 200 }],
+    traps: ['peakL', 'peakR'],
   },
 
   // 8 ── moving hazard: time the pour past a sweeping void.
@@ -174,17 +183,22 @@ export const LEVELS: LevelDef[] = [
     id: 8,
     name: 'Sweeper',
     world: W,
-    hint: '黑洞會來回移動，抓準空檔再拔栓',
-    pins: [{ id: 'a', x: 50, y: 36, len: 34, thick: 3 }],
-    walls: [
-      { x: 28, y: 66, w: 30, h: 3, angle: 0.5 },
-      { x: 72, y: 66, w: 30, h: 3, angle: -0.5 },
+    // Rebuilt: the cup used to sit directly under the pile, so the "funnel"
+    // walls were decoration (pulling one let MORE stardust through) and a
+    // monkey won 100% of the time. Now the cup is offset and the span is the
+    // only way across — with a void sweeping the gap underneath it.
+    hint: '黑洞在下面掃——斜橋是唯一的路，別拔它',
+    pins: [
+      { id: 'hold', x: 30, y: 42, len: 22, thick: 3 },
+      { id: 'span', x: 42, y: 74, len: 44, thick: 4, angle: 0.6 },
     ],
-    emitters: [{ x: 50, y: 26, w: 28, h: 8, count: 30 }],
-    cups: [{ id: 'c', x: 50, y: 132, w: 28, h: 16, need: 10 }],
-    hazards: [{ x: 50, y: 98, w: 14, h: 8, kind: 'void', moveX: 1.6, moveRange: 20 }],
+    walls: [],
+    emitters: [{ x: 30, y: 28, w: 18, h: 14, count: 26 }],
+    cups: [{ id: 'c', x: 76, y: 122, w: 22, h: 20, need: 12 }],
+    hazards: [{ x: 32, y: 122, w: 30, h: 10, kind: 'void', moveX: 1.4, moveRange: 10 }],
     stars: { pulls: [1, 1] },
-    solution: [{ pin: 'a', atMs: 200 }],
+    solution: [{ pin: 'hold', atMs: 200 }],
+    traps: ['span'],
   },
 
   // 9 ── funnel past a sweeping lava.
@@ -192,50 +206,56 @@ export const LEVELS: LevelDef[] = [
     id: 9,
     name: 'Hot Timing',
     world: W,
-    hint: '岩漿來回掃，趁空檔倒下去',
-    pins: [{ id: 'a', x: 50, y: 34, len: 26, thick: 3 }],
-    walls: [
-      { x: 30, y: 66, w: 30, h: 3, angle: 0.5 },
-      { x: 70, y: 66, w: 30, h: 3, angle: -0.5 },
+    // Mirror of L8 so the read flips (pour right→left) — plus a second shelf:
+    // the stream lands on 'shelf' and waits there until you drop it, so this
+    // level needs TWO deliberate pulls, not one.
+    hint: '岩漿來回掃。先放行，星塵會停在檯子上——抓準空檔再放它下去',
+    pins: [
+      { id: 'hold', x: 70, y: 42, len: 22, thick: 3 },
+      { id: 'span', x: 58, y: 74, len: 44, thick: 4, angle: -0.6 },
+      { id: 'shelf', x: 24, y: 104, len: 24, thick: 3 },
     ],
-    emitters: [{ x: 50, y: 22, w: 22, h: 12, count: 34 }],
-    cups: [{ id: 'c', x: 50, y: 132, w: 28, h: 16, need: 11 }],
-    hazards: [{ x: 50, y: 98, w: 16, h: 8, kind: 'lava', moveX: 1.5, moveRange: 22 }],
-    stars: { pulls: [1, 1] },
-    solution: [{ pin: 'a', atMs: 200 }],
+    walls: [],
+    emitters: [{ x: 70, y: 28, w: 18, h: 14, count: 30 }],
+    cups: [{ id: 'c', x: 24, y: 132, w: 24, h: 16, need: 12 }],
+    hazards: [{ x: 60, y: 124, w: 30, h: 9, kind: 'lava', moveX: 1.5, moveRange: 16 }],
+    stars: { pulls: [2, 2] },
+    solution: [
+      { pin: 'hold', atMs: 200 },
+      { pin: 'shelf', atMs: 3200 },
+    ],
+    traps: ['span'],
   },
 
   // 10 ── three cups, three pins.
   {
     id: 10,
-    name: 'Three of a Kind',
+    name: 'Wrong Way Round',
+    spike: true,
     world: W,
-    hint: '三個杯子，全都要滿',
+    // RULE-BREAKER #2: the rote habit is "work top-to-bottom", and here that
+    // loses. Release the flood first and it lands on the pile still sitting on
+    // 'gate', blasting it off the sides into the lava. Drain the lower pile
+    // first, THEN send the flood down the empty channel.
+    hint: '由上往下拔？這關會害你——先把下面那堆放走，再開上面的洪水',
     pins: [
-      { id: 'l', x: 20, y: 40, len: 13, thick: 3 },
-      { id: 'm', x: 50, y: 40, len: 13, thick: 3 },
-      { id: 'r', x: 80, y: 40, len: 13, thick: 3 },
+      { id: 'top', x: 50, y: 26, len: 26, thick: 3 },
+      { id: 'gate', x: 50, y: 64, len: 22, thick: 3 },
     ],
-    walls: [
-      { x: 35, y: 90, w: 3, h: 60 },
-      { x: 65, y: 90, w: 3, h: 60 },
-    ],
+    walls: [],
     emitters: [
-      { x: 20, y: 28, w: 11, h: 12, count: 13 },
-      { x: 50, y: 28, w: 11, h: 12, count: 13 },
-      { x: 80, y: 28, w: 11, h: 12, count: 13 },
+      { x: 50, y: 14, w: 22, h: 10, count: 20 },
+      { x: 50, y: 52, w: 18, h: 10, count: 16 },
     ],
-    cups: [
-      { id: 'cl', x: 19, y: 126, w: 18, h: 20, need: 7 },
-      { id: 'cm', x: 50, y: 126, w: 18, h: 20, need: 7 },
-      { id: 'cr', x: 81, y: 126, w: 18, h: 20, need: 7 },
+    cups: [{ id: 'c', x: 50, y: 128, w: 24, h: 18, need: 26 }],
+    hazards: [
+      { x: 16, y: 120, w: 30, h: 10, kind: 'lava' },
+      { x: 84, y: 120, w: 30, h: 10, kind: 'lava' },
     ],
-    hazards: [],
-    stars: { pulls: [3, 3] },
+    stars: { pulls: [2, 2] },
     solution: [
-      { pin: 'l', atMs: 200 },
-      { pin: 'm', atMs: 350 },
-      { pin: 'r', atMs: 500 },
+      { pin: 'gate', atMs: 200 },
+      { pin: 'top', atMs: 3000 },
     ],
   },
 
@@ -264,22 +284,24 @@ export const LEVELS: LevelDef[] = [
     id: 12,
     name: 'Colour Guard',
     world: W,
-    hint: '顏色要配對，中間還有黑洞',
+    hint: '顏色要配對。中間是黑洞，兩座橋各自把顏色送出去——別動它們',
     pins: [
-      { id: 'g', x: 24, y: 38, len: 16, thick: 3 },
-      { id: 'r', x: 76, y: 38, len: 16, thick: 3 },
+      { id: 'g', x: 34, y: 38, len: 18, thick: 3 },
+      { id: 'r', x: 66, y: 38, len: 18, thick: 3 },
+      { id: 'bg', x: 30, y: 84, len: 30, thick: 4, angle: -0.55 },
+      { id: 'br', x: 70, y: 84, len: 30, thick: 4, angle: 0.55 },
     ],
     walls: [
       { x: 38, y: 112, w: 3, h: 28 },
       { x: 62, y: 112, w: 3, h: 28 },
     ],
     emitters: [
-      { x: 24, y: 26, w: 12, h: 12, count: 15, color: 'gold' },
-      { x: 76, y: 26, w: 12, h: 12, count: 15, color: 'rose' },
+      { x: 34, y: 26, w: 14, h: 12, count: 16, color: 'gold' },
+      { x: 66, y: 26, w: 14, h: 12, count: 16, color: 'rose' },
     ],
     cups: [
-      { id: 'cg', x: 22, y: 124, w: 24, h: 22, need: 9, color: 'gold' },
-      { id: 'cr', x: 78, y: 124, w: 24, h: 22, need: 9, color: 'rose' },
+      { id: 'cg', x: 14, y: 120, w: 22, h: 22, need: 9, color: 'gold' },
+      { id: 'cr', x: 86, y: 120, w: 22, h: 22, need: 9, color: 'rose' },
     ],
     hazards: [{ x: 50, y: 128, w: 18, h: 10, kind: 'void' }],
     stars: { pulls: [2, 2] },
@@ -287,6 +309,7 @@ export const LEVELS: LevelDef[] = [
       { pin: 'g', atMs: 200 },
       { pin: 'r', atMs: 400 },
     ],
+    traps: ['bg', 'br'],
   },
 
   // 13 ── twin keystones: two bridges, two cups, outer lava. Leave both bridges.
@@ -327,20 +350,27 @@ export const LEVELS: LevelDef[] = [
     id: 14,
     name: 'Double Sweep',
     world: W,
-    hint: '兩個黑洞交錯移動，看準再拔',
-    pins: [{ id: 'a', x: 50, y: 32, len: 26, thick: 3 }],
-    walls: [
-      { x: 30, y: 60, w: 30, h: 3, angle: 0.5 },
-      { x: 70, y: 60, w: 30, h: 3, angle: -0.5 },
+    // Two-stage descent between two drifting voids: cross on the upper span,
+    // rest on the shelf, then drop. Both spans are load-bearing.
+    hint: '兩個黑洞交錯移動。橋撐著去路——分兩段走，看準再放',
+    pins: [
+      { id: 'hold', x: 28, y: 34, len: 22, thick: 3 },
+      { id: 'span', x: 42, y: 64, len: 42, thick: 4, angle: 0.6 },
+      { id: 'shelf', x: 76, y: 96, len: 22, thick: 3 },
     ],
-    emitters: [{ x: 50, y: 20, w: 22, h: 12, count: 36 }],
-    cups: [{ id: 'c', x: 50, y: 134, w: 30, h: 14, need: 10 }],
+    walls: [],
+    emitters: [{ x: 28, y: 20, w: 18, h: 14, count: 30 }],
+    cups: [{ id: 'c', x: 76, y: 132, w: 24, h: 16, need: 12 }],
     hazards: [
-      { x: 40, y: 92, w: 12, h: 7, kind: 'void', moveX: 1.7, moveRange: 16 },
-      { x: 60, y: 112, w: 12, h: 7, kind: 'void', moveX: 2.1, moveRange: 16 },
+      { x: 34, y: 96, w: 14, h: 7, kind: 'void', moveX: 1.7, moveRange: 14 },
+      { x: 50, y: 124, w: 16, h: 8, kind: 'void', moveX: 2.1, moveRange: 14 },
     ],
-    stars: { pulls: [1, 1] },
-    solution: [{ pin: 'a', atMs: 200 }],
+    stars: { pulls: [2, 2] },
+    solution: [
+      { pin: 'hold', atMs: 200 },
+      { pin: 'shelf', atMs: 3400 },
+    ],
+    traps: ['span'],
   },
 
   // 15 ── ordered release: clear the shelf before opening the flood.
@@ -348,10 +378,15 @@ export const LEVELS: LevelDef[] = [
     id: 15,
     name: 'Clear the Shelf',
     world: W,
-    hint: '先開上面的閘，等它流下去，再放大水流',
+    // CHAIN: pulling 'gate' also knocks out 'catch' a beat later, so one pull
+    // starts a cascade the player has to have set up correctly first.
+    // (The chutes stay scenery: with the cup directly below they aren't
+    // load-bearing, so making them pullable would be a fake choice.)
+    hint: '拔中間那根會連鎖鬆開下面的接盤——先把上面的放下來墊好',
     pins: [
       { id: 'top', x: 50, y: 28, len: 24, thick: 3 },
-      { id: 'gate', x: 50, y: 58, len: 24, thick: 3 },
+      { id: 'gate', x: 50, y: 58, len: 24, thick: 3, releases: ['catch'] },
+      { id: 'catch', x: 50, y: 78, len: 26, thick: 3 },
     ],
     walls: [
       { x: 30, y: 92, w: 30, h: 3, angle: 0.5 },
@@ -368,6 +403,7 @@ export const LEVELS: LevelDef[] = [
       { pin: 'top', atMs: 200 },
       { pin: 'gate', atMs: 1400 },
     ],
+
   },
 
   // 16 ── two colours across a drifting void.
@@ -375,22 +411,24 @@ export const LEVELS: LevelDef[] = [
     id: 16,
     name: 'Void Crossing',
     world: W,
-    hint: '兩種顏色，中間有游走的黑洞',
+    hint: '兩種顏色各走一座橋出去，中間的黑洞還會游走',
     pins: [
-      { id: 'g', x: 22, y: 40, len: 16, thick: 3 },
-      { id: 'a', x: 78, y: 40, len: 16, thick: 3 },
+      { id: 'g', x: 32, y: 40, len: 16, thick: 3 },
+      { id: 'a', x: 68, y: 40, len: 16, thick: 3 },
+      { id: 'bg', x: 30, y: 84, len: 30, thick: 4, angle: -0.55 },
+      { id: 'ba', x: 70, y: 84, len: 30, thick: 4, angle: 0.55 },
     ],
     walls: [
       { x: 38, y: 108, w: 3, h: 34 },
       { x: 62, y: 108, w: 3, h: 34 },
     ],
     emitters: [
-      { x: 22, y: 28, w: 12, h: 12, count: 16, color: 'gold' },
-      { x: 78, y: 28, w: 12, h: 12, count: 16, color: 'aqua' },
+      { x: 32, y: 28, w: 12, h: 12, count: 16, color: 'gold' },
+      { x: 68, y: 28, w: 12, h: 12, count: 16, color: 'aqua' },
     ],
     cups: [
-      { id: 'cg', x: 22, y: 122, w: 24, h: 22, need: 8, color: 'gold' },
-      { id: 'ca', x: 78, y: 122, w: 24, h: 22, need: 8, color: 'aqua' },
+      { id: 'cg', x: 14, y: 120, w: 22, h: 22, need: 8, color: 'gold' },
+      { id: 'ca', x: 86, y: 120, w: 22, h: 22, need: 8, color: 'aqua' },
     ],
     hazards: [{ x: 50, y: 104, w: 14, h: 8, kind: 'void', moveX: 1.4, moveRange: 14 }],
     stars: { pulls: [2, 2] },
@@ -398,6 +436,7 @@ export const LEVELS: LevelDef[] = [
       { pin: 'g', atMs: 200 },
       { pin: 'a', atMs: 300 },
     ],
+    traps: ['bg', 'ba'],
   },
 
   // 17 ── three colours, three cups.
@@ -405,6 +444,10 @@ export const LEVELS: LevelDef[] = [
     id: 17,
     name: 'Rainbow Row',
     world: W,
+    // TODO(redesign): still ~96% monkey-winnable. Making the lane dividers
+    // pullable was tried and reverted — with each cup directly under its own
+    // pile the colours never actually mix, so the "trap" had no teeth and would
+    // have been a fake choice. Needs the offset-cup treatment (see L12/L16).
     hint: '三種顏色，各就各位',
     pins: [
       { id: 'l', x: 20, y: 40, len: 13, thick: 3 },
@@ -432,6 +475,7 @@ export const LEVELS: LevelDef[] = [
       { pin: 'm', atMs: 350 },
       { pin: 'r', atMs: 500 },
     ],
+
   },
 
   // 18 ── colour + bridge: each colour rides its own bridge to its cup. Pull a
@@ -473,17 +517,25 @@ export const LEVELS: LevelDef[] = [
     id: 19,
     name: 'Avalanche',
     world: W,
-    hint: '一次傾瀉——盡量別浪費',
-    pins: [{ id: 'a', x: 50, y: 36, len: 30, thick: 3 }],
-    walls: [
-      { x: 26, y: 70, w: 28, h: 3, angle: 0.5 },
-      { x: 74, y: 70, w: 28, h: 3, angle: -0.5 },
+    // A huge pour, but routed: the span carries the avalanche across the lava
+    // and the shelf holds it until you release it into the cup. Big volume AND
+    // real decisions (it used to be one pin with no hazard at all).
+    hint: '大傾瀉！斜橋撐著整條路——分兩段放，別讓它掉進岩漿',
+    pins: [
+      { id: 'hold', x: 28, y: 36, len: 24, thick: 3 },
+      { id: 'span', x: 44, y: 70, len: 46, thick: 4, angle: 0.6 },
+      { id: 'shelf', x: 78, y: 100, len: 22, thick: 3 },
     ],
-    emitters: [{ x: 50, y: 24, w: 24, h: 14, count: 40 }],
-    cups: [{ id: 'c', x: 50, y: 132, w: 30, h: 16, need: 21 }],
-    hazards: [],
-    stars: { pulls: [1, 1] },
-    solution: [{ pin: 'a', atMs: 200 }],
+    walls: [],
+    emitters: [{ x: 28, y: 22, w: 20, h: 14, count: 38 }],
+    cups: [{ id: 'c', x: 78, y: 132, w: 26, h: 16, need: 16 }],
+    hazards: [{ x: 34, y: 128, w: 34, h: 10, kind: 'lava' }],
+    stars: { pulls: [2, 2] },
+    solution: [
+      { pin: 'hold', atMs: 200 },
+      { pin: 'shelf', atMs: 3600 },
+    ],
+    traps: ['span'],
   },
 
   // 20 ── grand finale: a big fountain split, a drifting black hole in the
@@ -492,20 +544,245 @@ export const LEVELS: LevelDef[] = [
     id: 20,
     name: 'Grand Finale',
     world: W,
-    hint: '大噴泉分流，中間黑洞會移動、兩側是岩漿——穩穩落杯 ✦',
-    pins: [{ id: 'hold', x: 50, y: 30, len: 38, thick: 3 }],
-    walls: [
-      { x: 43, y: 58, w: 20, h: 3, angle: -0.42 },
-      { x: 57, y: 58, w: 20, h: 3, angle: 0.42 },
+    hint: '終章 ✦ 分流、守住兩座橋，左杯滿了才會開門——最後再放行右邊',
+    pins: [
+      { id: 'hold', x: 50, y: 30, len: 38, thick: 3 },
+      // The fountain's split peak is load-bearing: pull either half and the
+      // whole pour collapses straight down into the drifting black hole.
+      { id: 'splitL', x: 43, y: 58, len: 20, thick: 3, angle: -0.42 },
+      { id: 'splitR', x: 57, y: 58, len: 20, thick: 3, angle: 0.42 },
+      // The right stream parks on this shelf until you release it — and it can
+      // only get anywhere once the gate below has opened.
+      { id: 'shelf', x: 78, y: 86, len: 22, thick: 3 },
     ],
+    // Gate-on-fill: the right route stays sealed until the LEFT cup is full,
+    // so the finale is a genuine two-stage machine, not one tap.
+    walls: [{ x: 78, y: 108, w: 26, h: 3, gate: 'cl' }],
     emitters: [{ x: 50, y: 22, w: 22, h: 6, count: 32 }],
     cups: [
       { id: 'cl', x: 24, y: 130, w: 26, h: 20, need: 8 },
-      { id: 'cr', x: 76, y: 130, w: 26, h: 20, need: 8 },
+      { id: 'cr', x: 78, y: 130, w: 26, h: 20, need: 8 },
     ],
     hazards: [{ x: 50, y: 112, w: 14, h: 8, kind: 'void', moveX: 1.4, moveRange: 12 }],
-    stars: { pulls: [1, 1] },
-    solution: [{ pin: 'hold', atMs: 200 }],
+    stars: { pulls: [2, 3] },
+    solution: [
+      { pin: 'hold', atMs: 200 },
+      { pin: 'shelf', atMs: 4200 },
+    ],
+    traps: ['splitL', 'splitR'],
+  },
+
+  // ── Chapter 3 "Machine" (21–25) — complex, multi-step dependency puzzles. ──
+  // Playtest feedback: "太簡單、不用動腦." These levels answer it. Each defeats
+  // the rote rule ("pull the flat pins top-to-bottom") because the correct
+  // order is the OPPOSITE — release bottom-up, or a loaded shelf gets buried
+  // and its overflow spills into the lava. Supply is tuned close to demand, so
+  // one careless spill loses. Verified in src/rote.test.ts.
+
+  // 21 ── Cascade: three shelves stacked over lava. Release bottom-up
+  //       (s3→s2→s1); pull a higher shelf first and it buries the loaded one
+  //       below, whose overflow spills off the sides into the lava.
+  {
+    id: 21,
+    name: 'Cascade',
+    spike: true,
+    world: W,
+    hint: '三層架子疊在岩漿上——由下往上拔，先放最底那層',
+    pins: [
+      { id: 's1', x: 50, y: 30, len: 22, thick: 3 },
+      { id: 's2', x: 50, y: 58, len: 22, thick: 3 },
+      { id: 's3', x: 50, y: 86, len: 22, thick: 3 },
+    ],
+    walls: [],
+    emitters: [
+      { x: 50, y: 20, w: 18, h: 9, count: 8 },
+      { x: 50, y: 48, w: 18, h: 9, count: 8 },
+      { x: 50, y: 76, w: 18, h: 9, count: 8 },
+    ],
+    cups: [{ id: 'c', x: 50, y: 130, w: 22, h: 16, need: 22 }],
+    hazards: [
+      { x: 18, y: 100, w: 20, h: 8, kind: 'lava' },
+      { x: 82, y: 100, w: 20, h: 8, kind: 'lava' },
+      { x: 18, y: 128, w: 16, h: 8, kind: 'lava' },
+      { x: 82, y: 128, w: 16, h: 8, kind: 'lava' },
+    ],
+    stars: { pulls: [3, 4] },
+    solution: [
+      { pin: 's3', atMs: 200 },
+      { pin: 's2', atMs: 2600 },
+      { pin: 's1', atMs: 5200 },
+    ],
+  },
+
+  // 22 ── Lock & Key: GATE dependency. The left cascade fills the key cup `ck`;
+  //       filling it opens a gate that drops the pile parked on it into `cm`.
+  //       Two dependent stages — botch the order trap and the gate never opens.
+  {
+    id: 22,
+    name: 'Lock & Key',
+    spike: true,
+    world: W,
+    hint: '由下往上填滿左邊的鑰匙杯，右邊閘門才會開，把星塵放進去',
+    pins: [
+      { id: 's1', x: 30, y: 26, len: 20, thick: 3 },
+      { id: 's2', x: 30, y: 52, len: 20, thick: 3 },
+      { id: 's3', x: 30, y: 78, len: 20, thick: 3 },
+    ],
+    walls: [
+      { x: 52, y: 104, w: 3, h: 70 }, // divider protects the gate column
+      { x: 76, y: 72, w: 28, h: 3, gate: 'ck' },
+    ],
+    emitters: [
+      { x: 30, y: 16, w: 16, h: 9, count: 8 },
+      { x: 30, y: 42, w: 16, h: 9, count: 8 },
+      { x: 30, y: 68, w: 16, h: 9, count: 8 },
+      { x: 76, y: 58, w: 24, h: 10, count: 14 }, // pile parked on the gate
+    ],
+    cups: [
+      { id: 'ck', x: 30, y: 128, w: 20, h: 16, need: 22 },
+      { id: 'cm', x: 76, y: 128, w: 24, h: 16, need: 12 },
+    ],
+    hazards: [
+      { x: 10, y: 100, w: 14, h: 8, kind: 'lava' },
+      { x: 46, y: 100, w: 8, h: 8, kind: 'lava' },
+      { x: 10, y: 128, w: 12, h: 8, kind: 'lava' },
+    ],
+    stars: { pulls: [3, 4] },
+    solution: [
+      { pin: 's3', atMs: 200 },
+      { pin: 's2', atMs: 2600 },
+      { pin: 's1', atMs: 5200 },
+    ],
+  },
+
+  // 23 ── Chain Reaction: four shelves, bottom-up. `trigger` CHAIN-releases
+  //       `catch` a beat later, so the bottom pair clears with one pull — but
+  //       the order (trigger→mid→flood) is still strict.
+  {
+    id: 23,
+    name: 'Chain Reaction',
+    spike: true,
+    world: W,
+    hint: '拔那根會連鎖鬆開下一層——一樣由下往上，別讓上層壓垮下層',
+    pins: [
+      { id: 'flood', x: 50, y: 26, len: 22, thick: 3 },
+      { id: 'mid', x: 50, y: 50, len: 22, thick: 3 },
+      { id: 'trigger', x: 50, y: 72, len: 22, thick: 3, releases: ['catch'] },
+      { id: 'catch', x: 50, y: 92, len: 22, thick: 3 },
+    ],
+    walls: [],
+    emitters: [
+      { x: 50, y: 17, w: 16, h: 8, count: 8 },
+      { x: 50, y: 41, w: 16, h: 8, count: 8 },
+      { x: 50, y: 63, w: 16, h: 8, count: 8 },
+      { x: 50, y: 84, w: 16, h: 8, count: 8 },
+    ],
+    cups: [{ id: 'c', x: 50, y: 132, w: 22, h: 14, need: 30 }],
+    hazards: [
+      { x: 18, y: 106, w: 20, h: 8, kind: 'lava' },
+      { x: 82, y: 106, w: 20, h: 8, kind: 'lava' },
+      { x: 18, y: 130, w: 14, h: 8, kind: 'lava' },
+      { x: 82, y: 130, w: 14, h: 8, kind: 'lava' },
+    ],
+    stars: { pulls: [3, 4] },
+    solution: [
+      { pin: 'trigger', atMs: 200 },
+      { pin: 'mid', atMs: 2800 },
+      { pin: 'flood', atMs: 5400 },
+    ],
+  },
+
+  // 24 ── Twin Locks: the central pile is parked on TWO stacked gates and only
+  //       reaches `cm` once BOTH side keys fill (gateA:ck1, gateB:ck2). Each key
+  //       is its own order trap — solve both cleanly or the pile stays locked.
+  {
+    id: 24,
+    name: 'Twin Locks',
+    spike: true,
+    world: W,
+    hint: '中間那堆鎖著兩道閘——左右兩個鑰匙杯都要填滿才放得出來',
+    pins: [
+      { id: 'lf', x: 18, y: 26, len: 14, thick: 3 },
+      { id: 'lh', x: 18, y: 50, len: 14, thick: 3 },
+      { id: 'rf', x: 82, y: 26, len: 14, thick: 3 },
+      { id: 'rh', x: 82, y: 50, len: 14, thick: 3 },
+    ],
+    walls: [
+      { x: 34, y: 100, w: 3, h: 60 },
+      { x: 66, y: 100, w: 3, h: 60 },
+      { x: 50, y: 58, w: 24, h: 3, gate: 'ck1' },
+      { x: 50, y: 86, w: 24, h: 3, gate: 'ck2' },
+    ],
+    emitters: [
+      { x: 18, y: 16, w: 12, h: 9, count: 6 },
+      { x: 18, y: 40, w: 12, h: 9, count: 10 },
+      { x: 82, y: 16, w: 12, h: 9, count: 6 },
+      { x: 82, y: 40, w: 12, h: 9, count: 10 },
+      { x: 50, y: 46, w: 20, h: 9, count: 14 }, // central pile on gateA
+    ],
+    cups: [
+      { id: 'ck1', x: 18, y: 128, w: 18, h: 16, need: 9 },
+      { id: 'ck2', x: 82, y: 128, w: 18, h: 16, need: 9 },
+      { id: 'cm', x: 50, y: 130, w: 22, h: 14, need: 12 },
+    ],
+    hazards: [
+      { x: 4, y: 96, w: 10, h: 8, kind: 'lava' },
+      { x: 32, y: 96, w: 6, h: 8, kind: 'lava' },
+      { x: 96, y: 96, w: 10, h: 8, kind: 'lava' },
+      { x: 68, y: 96, w: 6, h: 8, kind: 'lava' },
+    ],
+    stars: { pulls: [4, 5] },
+    solution: [
+      { pin: 'lh', atMs: 200 },
+      { pin: 'rh', atMs: 500 },
+      { pin: 'lf', atMs: 3200 },
+      { pin: 'rf', atMs: 3500 },
+    ],
+  },
+
+  // 25 ── The Machine (finale): order cascade on the left fills `cl`, which
+  //       opens the gate sealing the right route; then a CHAIN pull (`rshelf`
+  //       releases `rhelp`) drops the right piles into `cr`. Cascade + gate +
+  //       chain in one contraption.
+  {
+    id: 25,
+    name: 'The Machine',
+    spike: true,
+    world: W,
+    hint: '先由下往上填滿左杯開閘，再拔右邊那根把整疊放下去',
+    pins: [
+      { id: 's1', x: 30, y: 24, len: 18, thick: 3 },
+      { id: 's2', x: 30, y: 48, len: 18, thick: 3 },
+      { id: 's3', x: 30, y: 72, len: 18, thick: 3 },
+      { id: 'rshelf', x: 74, y: 60, len: 20, thick: 3, releases: ['rhelp'] },
+      { id: 'rhelp', x: 74, y: 40, len: 18, thick: 3 },
+    ],
+    walls: [
+      { x: 52, y: 100, w: 3, h: 60 },
+      { x: 74, y: 84, w: 26, h: 3, gate: 'cl' },
+    ],
+    emitters: [
+      { x: 30, y: 15, w: 14, h: 8, count: 7 },
+      { x: 30, y: 39, w: 14, h: 8, count: 7 },
+      { x: 30, y: 63, w: 14, h: 8, count: 7 },
+      { x: 74, y: 50, w: 20, h: 8, count: 7 }, // pile on rshelf
+      { x: 74, y: 30, w: 18, h: 8, count: 6 }, // pile on rhelp (chained)
+    ],
+    cups: [
+      { id: 'cl', x: 30, y: 126, w: 18, h: 16, need: 18 },
+      { id: 'cr', x: 74, y: 132, w: 20, h: 14, need: 11 },
+    ],
+    hazards: [
+      { x: 10, y: 98, w: 12, h: 8, kind: 'lava' },
+      { x: 47, y: 98, w: 6, h: 8, kind: 'lava' },
+    ],
+    stars: { pulls: [4, 5] },
+    solution: [
+      { pin: 's3', atMs: 200 },
+      { pin: 's2', atMs: 2600 },
+      { pin: 's1', atMs: 5000 },
+      { pin: 'rshelf', atMs: 8200 },
+    ],
   },
 ]
 

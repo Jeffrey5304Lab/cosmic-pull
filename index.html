@@ -44,12 +44,14 @@
     <div id="app">
       <header class="hud">
         <button id="btn-menu" class="icon-btn" aria-label="Levels">☰</button>
+        <!-- Restart lives on the left, away from Sound: side by side they were
+             an easy misfire that wipes your run. -->
+        <button id="btn-restart" class="icon-btn" aria-label="Restart level">↻</button>
         <div class="hud-center">
           <span id="level-name" class="level-name">Cosmic Pull</span>
           <span id="pull-count" class="pull-count"></span>
         </div>
         <button id="btn-sound" class="icon-btn" aria-label="Sound">♪</button>
-        <button id="btn-restart" class="icon-btn" aria-label="Restart">↻</button>
       </header>
 
       <div id="stage" class="stage">
@@ -61,6 +63,7 @@
           <div class="card">
             <div id="win-stars" class="stars">★ ★ ★</div>
             <h2 id="win-title">Nice pull!</h2>
+            <div id="win-reward" class="reward"></div>
             <div class="card-actions">
               <button id="win-replay" class="btn ghost">Replay</button>
               <button id="win-next" class="btn primary">Next ›</button>
@@ -72,9 +75,10 @@
         <!-- Failed -->
         <div id="lose" class="overlay hidden">
           <div class="card">
-            <h2>Out of stardust…</h2>
-            <p class="sub">Not enough made it into the cups.</p>
+            <h2>So close!</h2>
+            <p class="sub">Some stardust slipped away — give it another pour.</p>
             <div class="card-actions">
+              <button id="lose-menu" class="btn ghost">Levels</button>
               <button id="lose-retry" class="btn primary">Try again</button>
             </div>
           </div>
@@ -87,7 +91,20 @@
             <p id="menu-sub" class="sub"></p>
             <div id="level-grid" class="level-grid"></div>
             <a id="more-games" class="more-games" href="https://jeffrey5304lab.github.io/cosmic-merge/" target="_blank" rel="noopener">✦ More: Cosmic Merge</a>
-            <button id="menu-close" class="btn ghost">Close</button>
+            <div class="card-actions">
+              <button id="btn-shop" class="btn ghost">✦ Styles</button>
+              <button id="menu-close" class="btn ghost">Close</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sky-theme shop (✦ currency sink) -->
+        <div id="shop" class="overlay hidden">
+          <div class="card wide">
+            <h2 class="menu-title">✦ <span class="accent">Sky Styles</span></h2>
+            <p id="shop-sub" class="sub"></p>
+            <div id="shop-grid" class="shop-grid"></div>
+            <button id="shop-close" class="btn ghost">Back</button>
           </div>
         </div>
       </div>
