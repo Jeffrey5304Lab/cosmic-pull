@@ -38,6 +38,35 @@ export function grainHex(color: 'gold' | 'rose' | 'aqua'): string {
   return color === 'rose' ? PALETTE.rose : color === 'aqua' ? PALETTE.aqua : PALETTE.gold
 }
 
+/**
+ * ✦ Sky themes — the stardust-currency SINK (see docs/GAME-DIRECTION.md §3.4).
+ * A theme only recolours the *background* (paper gradient + night-sky decor
+ * tint); it deliberately never touches stardust / cup / hazard colours, which
+ * carry gameplay meaning (colour-locked cups). So a purchase is pure cozy
+ * self-expression with zero balance impact. `parchment` is the free default.
+ */
+export interface SkyTheme {
+  id: string
+  name: string
+  cost: number
+  bg0: string
+  bg1: string
+  /** tint for background stars, constellations + the faint planet */
+  deco: string
+}
+
+export const THEMES: readonly SkyTheme[] = [
+  { id: 'parchment', name: 'Parchment', cost: 0, bg0: '#F7EFE0', bg1: '#EBDCC2', deco: '#D98A1F' },
+  { id: 'dusk', name: 'Dusk', cost: 30, bg0: '#ECE7F4', bg1: '#D3CAE6', deco: '#7C6AAE' },
+  { id: 'dawn', name: 'Dawn', cost: 40, bg0: '#FBEBE2', bg1: '#F3D3CC', deco: '#C67A78' },
+  { id: 'meadow', name: 'Meadow', cost: 40, bg0: '#EEF1DF', bg1: '#D8E1C0', deco: '#7C8B4C' },
+  { id: 'deep', name: 'Deep Space', cost: 80, bg0: '#DFE6EC', bg1: '#BFC9D8', deco: '#5B7290' },
+] as const
+
+export function themeById(id: string): SkyTheme {
+  return THEMES.find((t) => t.id === id) ?? THEMES[0]
+}
+
 // ─────────────────────────── AdMob ───────────────────────────
 export const ADMOB_LIVE = import.meta.env?.VITE_ADMOB_LIVE === '1'
 

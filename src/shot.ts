@@ -13,12 +13,14 @@ const levelId = Math.min(LEVEL_COUNT, Math.max(1, Number(p.get('level') || '1'))
 const steps = Number(p.get('steps') || '0')
 const pulls = (p.get('pull') || '').split(',').filter(Boolean)
 const winProgress = Number(p.get('win') || '0') // 0..1, drives the win constellation reveal
+const theme = p.get('theme') || 'parchment' // sky-theme id for previewing shop styles
 
 const canvas = document.getElementById('c') as HTMLCanvasElement
 canvas.width = 460
 canvas.height = 690
 const ctx = canvas.getContext('2d')!
 const renderer = new Renderer(ctx)
+renderer.setTheme(theme)
 const sim = new GameSim(getLevel(levelId)!)
 
 for (const id of pulls) sim.pull(id)

@@ -1,4 +1,4 @@
-import { PALETTE, WORLD, grainHex } from './config.ts'
+import { PALETTE, THEMES, WORLD, grainHex, themeById, type SkyTheme } from './config.ts'
 import type { GameSim } from './sim.ts'
 import type { StardustColor } from './types.ts'
 
@@ -18,6 +18,12 @@ export class Renderer {
   private constellations: { x: number; y: number }[][] = []
   /** faint background planet (ties into the Cosmic Merge universe) */
   private planet = { x: 74, y: 30, r: 14 }
+  /** active sky theme — recolours ONLY the background (never gameplay bodies). */
+  private theme: SkyTheme = THEMES[0]
+
+  setTheme(id: string): void {
+    this.theme = themeById(id)
+  }
 
   constructor(private ctx: CanvasRenderingContext2D) {
     // deterministic starfield in world space
@@ -183,17 +189,18 @@ export class Renderer {
   // ── background ──────────────────────────────────────────────
   private drawBackground(timeMs: number): void {
     const ctx = this.ctx
+    const deco = this.theme.deco
     const g = ctx.createLinearGradient(0, 0, 0, WORLD.h)
-    g.addColorStop(0, '#F7EFE0')
-    g.addColorStop(1, '#EBDCC2')
+    g.addColorStop(0, this.theme.bg0)
+    g.addColorStop(1, this.theme.bg1)
     ctx.fillStyle = g
     ctx.fillRect(0, 0, WORLD.w, WORLD.h)
 
     // faint ringed planet in the sky (cozy nod to Cosmic Merge)
-    this.drawBgPlanet(timeMs)
+    this.drawBgPlanet(timeMs, deco)
 
     // constellations: connected star doodles with a soft ink line
-    ctx.strokeStyle = PALETTE.goldDeep
+    ctx.strokeStyle = deco
     ctx.lineWidth = 0.25
     for (const c of this.constellations) {
       ctx.globalAlpha = 0.22
@@ -201,7 +208,7 @@ export class Renderer {
       c.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)))
       ctx.stroke()
       ctx.globalAlpha = 0.4
-      ctx.fillStyle = PALETTE.goldDeep
+      ctx.fillStyle = deco
       for (const p of c) {
         ctx.beginPath()
         ctx.arc(p.x, p.y, 0.7, 0, Math.PI * 2)
@@ -213,7 +220,7 @@ export class Renderer {
     for (const s of this.stars) {
       const tw = 0.6 + 0.4 * Math.sin(timeMs / 600 + s.x)
       ctx.globalAlpha = s.a * tw
-      ctx.fillStyle = PALETTE.goldDeep
+      ctx.fillStyle = deco
       ctx.beginPath()
       ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2)
       ctx.fill()
@@ -221,21 +228,21 @@ export class Renderer {
     ctx.globalAlpha = 1
   }
 
-  private drawBgPlanet(timeMs: number): void {
+  private drawBgPlanet(timeMs: number, deco: string): void {
     const ctx = this.ctx
     const { x, y, r } = this.planet
     ctx.save()
     ctx.globalAlpha = 0.14
-    // body
+    // body — warm lit side into the theme's decor tint (faint on any palette)
     const grd = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.2, x, y, r)
-    grd.addColorStop(0, PALETTE.gold)
-    grd.addColorStop(1, PALETTE.goldDeep)
+    grd.addColorStop(0, '#FFF6E6')
+    grd.addColorStop(1, deco)
     ctx.fillStyle = grd
     ctx.beginPath()
     ctx.arc(x, y, r, 0, Math.PI * 2)
     ctx.fill()
     // ring
-    ctx.strokeStyle = PALETTE.goldDeep
+    ctx.strokeStyle = deco
     ctx.lineWidth = 1.1
     ctx.beginPath()
     ctx.ellipse(x, y, r * 1.7, r * 0.5, -0.4 + Math.sin(timeMs / 4000) * 0.03, 0, Math.PI * 2)

@@ -1,11 +1,11 @@
 import './style.css'
-import { PALETTE, PHYS } from './config.ts'
+import { PALETTE, PHYS, THEMES } from './config.ts'
 import { GameSim } from './sim.ts'
 import { Renderer } from './render.ts'
 import { Particles } from './particles.ts'
 import { LEVELS, LEVEL_COUNT, getLevel } from './levels.ts'
 import { computeStars, earnedStardust } from './logic.ts'
-import { addStardust, loadProgress, recordWin, saveProgress, totalStars, type Progress } from './storage.ts'
+import { addStardust, loadProgress, pickTheme, recordWin, saveProgress, totalStars, type Progress } from './storage.ts'
 import { shareResult } from './sharecard.ts'
 import * as audio from './audio.ts'
 import * as haptics from './haptics.ts'
@@ -29,6 +29,9 @@ const el = {
   menu: $('menu'),
   menuSub: $('menu-sub'),
   levelGrid: $('level-grid'),
+  shop: $('shop'),
+  shopSub: $('shop-sub'),
+  shopGrid: $('shop-grid'),
   btnSound: $('btn-sound'),
   btnRestart: $('btn-restart'),
 }
@@ -57,6 +60,7 @@ const floaters: { x: number; y: number; vy: number; life: number; max: number; n
 const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 
 audio.setMuted(progress.muted)
+renderer.setTheme(progress.theme)
 updateSoundBtn()
 
 // ── level lifecycle ───────────────────────────────────────────
@@ -131,6 +135,7 @@ function hideAllOverlays(): void {
   el.win.classList.add('hidden')
   el.lose.classList.add('hidden')
   el.menu.classList.add('hidden')
+  el.shop.classList.add('hidden')
 }
 
 // ── main loop (fixed timestep) ────────────────────────────────
@@ -408,6 +413,47 @@ function openMenu(): void {
   el.menu.classList.remove('hidden')
 }
 
+/** ✦ Sky-theme shop — the currency sink. Buying/selecting a theme only recolours
+ *  the background, so it's pure cozy self-expression (no gameplay effect). */
+function openShop(): void {
+  hideAllOverlays()
+  renderShop()
+  el.shop.classList.remove('hidden')
+}
+
+function renderShop(): void {
+  el.shopSub.innerHTML = `<span class="dust">✦ ${progress.stardust}</span> to spend`
+  el.shopGrid.innerHTML = ''
+  for (const th of THEMES) {
+    const owned = progress.owned.includes(th.id)
+    const selected = progress.theme === th.id
+    const affordable = progress.stardust >= th.cost
+    const cell = document.createElement('button')
+    cell.className = 'theme-swatch' + (selected ? ' selected' : '') + (!owned && !affordable ? ' cant' : '')
+    const state = selected ? 'Selected' : owned ? 'Select' : `✦ ${th.cost}`
+    cell.innerHTML =
+      `<span class="swatch-preview" style="background:linear-gradient(160deg, ${th.bg0}, ${th.bg1})">` +
+      `<i style="background:${th.deco}"></i><i style="background:${th.deco}"></i><i style="background:${th.deco}"></i></span>` +
+      `<span class="swatch-name">${th.name}</span>` +
+      `<span class="swatch-state">${state}</span>`
+    cell.addEventListener('click', () => {
+      if (selected) return
+      const next = pickTheme(progress, th.id, th.cost)
+      if (!next) {
+        // not enough ✦ — a gentle shake, no scary modal
+        cell.classList.remove('deny')
+        void cell.offsetWidth
+        cell.classList.add('deny')
+        return
+      }
+      progress = next
+      renderer.setTheme(progress.theme)
+      renderShop()
+    })
+    el.shopGrid.appendChild(cell)
+  }
+}
+
 // ── input: tap a pin to pull it ───────────────────────────────
 function toWorld(clientX: number, clientY: number): { x: number; y: number } {
   const rect = canvas.getBoundingClientRect()
@@ -442,6 +488,8 @@ canvas.addEventListener('pointerdown', (e) => {
 // ── buttons ───────────────────────────────────────────────────
 $('btn-menu').addEventListener('click', openMenu)
 $('menu-close').addEventListener('click', () => el.menu.classList.add('hidden'))
+$('btn-shop').addEventListener('click', openShop)
+$('shop-close').addEventListener('click', openMenu) // Back → the level map
 $('btn-restart').addEventListener('click', () => loadLevel(currentId))
 $('win-replay').addEventListener('click', () => loadLevel(currentId))
 $('win-share').addEventListener('click', () => {

@@ -205,8 +205,19 @@ L07 密堆已收斂）、勝利星座（L03-win）、完整 live win（`live-win
   （v1→v2 遷移、餘額累積/持久化/不為負、recordWin 不動餘額）。
 - 螢幕驗證：`meta-win-reward.png`（勝利卡 ✦ 行）、`meta-starmap.png`（章節星空）。
 
-**待人工 playtest / 決策**：貨幣的**用途**（P2 墨水/拖尾商店 = 花費出口，目前只進
-不出）；earnedStardust 的數值曲線（獎勵感/定價）；章節邊界 8/8/9 是否隨關卡重排調整。
+**待人工 playtest / 決策**：earnedStardust 的數值曲線（獎勵感/定價）；章節邊界
+8/8/9 是否隨關卡重排調整。
+
+### ✦ 花費出口：墨水主題商店（DONE，2026-08-14 Opus）
+貨幣不再只進不出。`config.THEMES` 定義 5 個天空主題（Parchment 免費 /
+Dusk 30 / Dawn·Meadow 40 / Deep Space 80），**只換背景+夜空色調，絕不動
+星塵/杯/岩漿等遊戲色**（colour-lock 可讀性零損失，已用 dusk/deep/dawn 截圖
+在有岩漿的 L2 驗證）。`storage` 加 `owned[]`+`theme`（同 v2 加法遷移）、
+`pickTheme()`（買+選，餘額不足回 null）。選單「✦ Styles」→ `#shop` overlay：
+主題卡（漸層預覽+狀態）、即時套用、買不起有 deny 抖動。`renderer.setTheme()`。
+96 tests 綠（+pickTheme 4 條）。截圖 shop-open/shop-dusk-selected/shop-applied-live。
+**待人工**：主題定價曲線、是否要更多主題/拖尾樣式（doc 原構想含拖尾，但拖尾＝
+星塵色＝遊戲語意，故先只做背景主題；拖尾樣式可做「形狀/長度」變體不碰顏色）。
 
 **下一步**：
 - **P1-7 節奏重排（留給 Jeffrey 定難度）**：25 關重排成 8 關一拍
