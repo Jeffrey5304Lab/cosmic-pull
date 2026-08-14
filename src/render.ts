@@ -15,6 +15,8 @@ export interface Transform {
 
 export class Renderer {
   private stars: { x: number; y: number; r: number; a: number }[] = []
+  /** slow-drifting dust motes — give the big empty mid-board gentle life */
+  private motes: { x: number; y: number; r: number; sp: number; ph: number }[] = []
   private constellations: { x: number; y: number }[][] = []
   /** faint background planet (ties into the Cosmic Merge universe) */
   private planet = { x: 74, y: 30, r: 14 }
@@ -31,6 +33,9 @@ export class Renderer {
     const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff)
     for (let i = 0; i < 60; i++) {
       this.stars.push({ x: rnd() * WORLD.w, y: rnd() * WORLD.h, r: 0.3 + rnd() * 0.9, a: 0.15 + rnd() * 0.5 })
+    }
+    for (let i = 0; i < 9; i++) {
+      this.motes.push({ x: rnd() * WORLD.w, y: rnd() * WORLD.h, r: 0.8 + rnd() * 1.4, sp: 1.4 + rnd() * 1.8, ph: rnd() * 6.28 })
     }
     // a couple of hand-placed constellations (connected star doodles)
     this.constellations = [
@@ -221,6 +226,26 @@ export class Renderer {
       ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2)
       ctx.fill()
     }
+    ctx.globalAlpha = 1
+
+    // slow-drifting dust motes (additive glow) — dust floating in a sunbeam, so
+    // the big empty mid-board breathes instead of reading as a blank half-page
+    ctx.save()
+    ctx.globalCompositeOperation = 'lighter'
+    for (const m of this.motes) {
+      const t = timeMs / 1000
+      const y = ((m.y - t * m.sp) % (WORLD.h + 8) + WORLD.h + 8) % (WORLD.h + 8) - 4
+      const x = m.x + Math.sin(t * 0.25 + m.ph) * 3
+      const grd = ctx.createRadialGradient(x, y, 0, x, y, m.r * 3)
+      grd.addColorStop(0, deco)
+      grd.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.globalAlpha = 0.1 + 0.05 * Math.sin(t * 0.7 + m.ph)
+      ctx.fillStyle = grd
+      ctx.beginPath()
+      ctx.arc(x, y, m.r * 3, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    ctx.restore()
     ctx.globalAlpha = 1
   }
 

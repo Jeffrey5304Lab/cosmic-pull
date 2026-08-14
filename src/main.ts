@@ -60,14 +60,34 @@ const floaters: { x: number; y: number; vy: number; life: number; max: number; n
 const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 
 audio.setMuted(progress.muted)
-renderer.setTheme(progress.theme)
 updateSoundBtn()
+
+/** Which chapter a level belongs to (1 Pour / 2 Route / 3 Machine). */
+function chapterOf(id: number): number {
+  return id <= 8 ? 1 : id <= 16 ? 2 : 3
+}
+/**
+ * The sky the board should wear. If the player has bought & chosen a theme,
+ * honour it everywhere; otherwise the *default* sky quietly evolves per chapter
+ * (warm → dawn → dusk) so progressing feels like travelling somewhere new
+ * instead of replaying the same cream board — the #1 first-glance boredom fix.
+ */
+function effectiveThemeId(levelId: number): string {
+  if (progress.theme !== 'parchment') return progress.theme
+  const ch = chapterOf(levelId)
+  return ch === 3 ? 'dusk' : ch === 2 ? 'dawn' : 'parchment'
+}
+function applyTheme(): void {
+  renderer.setTheme(effectiveThemeId(currentId))
+}
+applyTheme()
 
 // ── level lifecycle ───────────────────────────────────────────
 function loadLevel(id: number): void {
   const level = getLevel(id)
   if (!level) return
   currentId = id
+  applyTheme() // chapter-tinted sky (or the player's chosen theme)
   sim = new GameSim(level)
   particles.clear()
   resolved = false
@@ -450,7 +470,7 @@ function renderShop(): void {
         return
       }
       progress = next
-      renderer.setTheme(progress.theme)
+      applyTheme()
       renderShop()
     })
     el.shopGrid.appendChild(cell)

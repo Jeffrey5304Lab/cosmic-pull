@@ -94,15 +94,17 @@ export class Particles {
 
   private collectSparkle(x: number, y: number, color: StardustColor): void {
     const hex = grainHex(color)
-    for (let i = 0; i < 4; i++) {
+    // A touch more pop per landed grain — the pour is the payoff, so make each
+    // "chink" into the cup feel rewarding (kept small so a stream isn't chaos).
+    for (let i = 0; i < 6; i++) {
       this.add({
         x,
         y,
-        vx: (Math.random() - 0.5) * 10,
-        vy: -6 - Math.random() * 10,
-        max: 0.5,
-        size: 0.7 + Math.random() * 0.8,
-        grav: 24,
+        vx: (Math.random() - 0.5) * 12,
+        vy: -7 - Math.random() * 11,
+        max: 0.55,
+        size: 0.7 + Math.random() * 0.9,
+        grav: 26,
         color: i === 0 ? '#fff' : hex,
         kind: 'spark',
       })
