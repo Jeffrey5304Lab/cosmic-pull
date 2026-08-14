@@ -22,6 +22,7 @@ const has = (name) => argv.includes('--' + name)
 const levels = argv.filter((a) => /^\d+$/.test(a)).map(Number)
 const steps = Number(flag('steps', 150))
 const pull = flag('pull', '')
+const win = flag('win', '')
 
 const outDir = 'docs/shots'
 await mkdir(outDir, { recursive: true })
@@ -37,10 +38,11 @@ page.on('pageerror', (e) => console.error('  page error:', e.message))
 async function shotLevel(id) {
   const q = new URLSearchParams({ level: String(id), steps: String(steps) })
   if (pull) q.set('pull', pull)
+  if (win) q.set('win', win)
   await page.goto(`${base}/shot.html?${q}`, { waitUntil: 'load' })
   await page.waitForFunction(() => document.title === 'READY', null, { timeout: 15000 })
   const status = await page.evaluate(() => window.__status)
-  const file = `${outDir}/L${String(id).padStart(2, '0')}${pull ? '-pull' : ''}${steps === 0 ? '-start' : ''}.png`
+  const file = `${outDir}/L${String(id).padStart(2, '0')}${pull ? '-pull' : ''}${win ? '-win' : ''}${steps === 0 ? '-start' : ''}.png`
   await page.locator('#c').screenshot({ path: file })
   console.log(`${file}  (status: ${status})`)
 }

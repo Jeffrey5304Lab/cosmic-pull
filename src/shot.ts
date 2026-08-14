@@ -12,6 +12,7 @@ const p = new URLSearchParams(location.search)
 const levelId = Math.min(LEVEL_COUNT, Math.max(1, Number(p.get('level') || '1')))
 const steps = Number(p.get('steps') || '0')
 const pulls = (p.get('pull') || '').split(',').filter(Boolean)
+const winProgress = Number(p.get('win') || '0') // 0..1, drives the win constellation reveal
 
 const canvas = document.getElementById('c') as HTMLCanvasElement
 canvas.width = 460
@@ -26,7 +27,7 @@ for (let i = 0; i < steps; i++) sim.step(dt)
 
 const t = renderer.transformFor(canvas.width, canvas.height)
 ctx.setTransform(1, 0, 0, 1, 0, 0)
-renderer.draw(sim, t, steps * dt, null)
+renderer.draw(sim, t, steps * dt, null, null, winProgress)
 ;(window as unknown as { __png: string; __status: string }).__png = canvas.toDataURL('image/png')
 ;(window as unknown as { __status: string }).__status = sim.status
 document.title = 'READY'

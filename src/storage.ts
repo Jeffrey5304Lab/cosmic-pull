@@ -8,16 +8,20 @@ export interface Progress {
   /** levelId → best star count (1–3) */
   stars: Record<number, number>
   muted: boolean
+  /** ✦ stardust currency — the meta balance (earned from overflow + mastery). */
+  stardust: number
 }
 
-const DEFAULT: Progress = { unlocked: 1, stars: {}, muted: false }
+const DEFAULT: Progress = { unlocked: 1, stars: {}, muted: false, stardust: 0 }
 
 export function loadProgress(): Progress {
   try {
     const raw = localStorage.getItem(KEY)
     if (!raw) return { ...DEFAULT }
+    // Schema is grown additively: a v1 save (no `stardust`) simply defaults to 0,
+    // so old players keep every level + star and just start with an empty purse.
     const p = JSON.parse(raw) as Partial<Progress>
-    return { unlocked: p.unlocked ?? 1, stars: p.stars ?? {}, muted: p.muted ?? false }
+    return { unlocked: p.unlocked ?? 1, stars: p.stars ?? {}, muted: p.muted ?? false, stardust: p.stardust ?? 0 }
   } catch {
     return { ...DEFAULT }
   }
@@ -42,4 +46,11 @@ export function recordWin(p: Progress, levelId: number, stars: number, levelCoun
 
 export function totalStars(p: Progress): number {
   return Object.values(p.stars).reduce((a, b) => a + b, 0)
+}
+
+/** Add ✦ stardust to the purse and persist. Returns a mutated copy. */
+export function addStardust(p: Progress, n: number): Progress {
+  const next: Progress = { ...p, stardust: Math.max(0, p.stardust + Math.round(n)) }
+  saveProgress(next)
+  return next
 }

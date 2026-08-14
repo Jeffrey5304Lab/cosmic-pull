@@ -54,7 +54,14 @@ export class Renderer {
     return { scale, ox: (cw - WORLD.w * scale) / 2, oy: (ch - WORLD.h * scale) / 2 }
   }
 
-  draw(sim: GameSim, t: Transform, timeMs: number, pullable: string | null, coachPin: string | null = null): void {
+  draw(
+    sim: GameSim,
+    t: Transform,
+    timeMs: number,
+    pullable: string | null,
+    coachPin: string | null = null,
+    winProgress = 0,
+  ): void {
     const ctx = this.ctx
     ctx.save()
     ctx.translate(t.ox, t.oy)
@@ -73,7 +80,77 @@ export class Renderer {
       if (p) this.drawCoach(p.x, p.y - p.thick, timeMs)
     }
 
+    if (winProgress > 0) this.drawWinConstellation(sim.level.id, winProgress, timeMs)
+
     ctx.restore()
+  }
+
+  /** Per-level constellation, generated deterministically from the level id. On
+   *  win the collected stardust "becomes" this constellation in the sky — the
+   *  shareable payoff moment, and the seed of the meta "rebuild the night sky".
+   *  `p` (0..1) reveals stars then connecting lines in sequence. */
+  private winConstel: { id: number; pts: { x: number; y: number }[] } | null = null
+  private constelFor(id: number): { x: number; y: number }[] {
+    if (this.winConstel?.id === id) return this.winConstel.pts
+    let seed = (id * 2654435761) >>> 0
+    const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff)
+    const n = 4 + Math.floor(rnd() * 3) // 4..6 stars
+    const cx = WORLD.w / 2
+    const spanX = 58
+    const top = 22
+    const spanY = 30
+    const pts: { x: number; y: number }[] = []
+    for (let i = 0; i < n; i++) pts.push({ x: cx - spanX / 2 + rnd() * spanX, y: top + rnd() * spanY })
+    pts.sort((a, b) => a.x - b.x) // left→right so the connecting line reads cleanly
+    this.winConstel = { id, pts }
+    return pts
+  }
+
+  private drawWinConstellation(id: number, p: number, timeMs: number): void {
+    const ctx = this.ctx
+    const pts = this.constelFor(id)
+    const n = pts.length
+    const shown = (i: number) => Math.max(0, Math.min(1, p * (n + 1) - i)) // star i eases in over its slot
+    ctx.save()
+    ctx.globalCompositeOperation = 'lighter'
+
+    // connecting lines: segment k draws once both its endpoints are in
+    ctx.strokeStyle = PALETTE.gold
+    ctx.lineCap = 'round'
+    for (let i = 1; i < n; i++) {
+      const a = shown(i - 1)
+      const b = shown(i)
+      if (b <= 0) continue
+      ctx.globalAlpha = 0.5 * Math.min(a, b)
+      ctx.lineWidth = 0.5
+      ctx.beginPath()
+      ctx.moveTo(pts[i - 1].x, pts[i - 1].y)
+      ctx.lineTo(pts[i].x, pts[i].y)
+      ctx.stroke()
+    }
+
+    // stars: a bright core + a soft expanding halo as each pops in
+    for (let i = 0; i < n; i++) {
+      const s = shown(i)
+      if (s <= 0) continue
+      const tw = 0.85 + 0.15 * Math.sin(timeMs / 240 + i)
+      const { x, y } = pts[i]
+      const halo = ctx.createRadialGradient(x, y, 0, x, y, 4.5 * s)
+      halo.addColorStop(0, PALETTE.gold)
+      halo.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.globalAlpha = 0.6 * s
+      ctx.fillStyle = halo
+      ctx.beginPath()
+      ctx.arc(x, y, 4.5 * s, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.globalAlpha = 0.95 * s * tw
+      ctx.fillStyle = '#FFF6DC'
+      ctx.beginPath()
+      ctx.arc(x, y, 1.1 * s, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    ctx.restore()
+    ctx.globalAlpha = 1
   }
 
   /** A bobbing "tap here" hand pointing down at a pin (first-level onboarding). */
@@ -292,36 +369,45 @@ export class Renderer {
     const tw = 0.8 + 0.2 * Math.sin(timeMs / 170 + x * 1.3 + y) // per-grain twinkle
     const glow = 1 + 0.18 * Math.sin(timeMs / 200 + x + y)
 
+    // "Starlight on paper": the trail + halo are drawn with ADDITIVE blending so
+    // a stream of stardust reads as luminous flowing light against the cream
+    // background, not flat coloured dots. Kept subtle so it never blows out to
+    // white. Isolated in save/restore so the composite mode never leaks.
+    ctx.save()
+    ctx.globalCompositeOperation = 'lighter'
+
     // motion trail — fast grains streak like flowing light (comet tail)
     const speed = Math.hypot(vx, vy)
     if (speed > 0.5) {
-      const len = Math.min(speed * 0.9, 6)
+      const len = Math.min(speed * 1.1, 8)
       const nx = vx / speed
       const ny = vy / speed
       const grdT = ctx.createLinearGradient(x, y, x - nx * len, y - ny * len)
       grdT.addColorStop(0, hex)
-      grdT.addColorStop(1, 'rgba(255,255,255,0)')
+      grdT.addColorStop(1, 'rgba(0,0,0,0)')
       ctx.strokeStyle = grdT
-      ctx.lineWidth = r * 1.3
+      ctx.lineWidth = r * 1.4
       ctx.lineCap = 'round'
-      ctx.globalAlpha = 0.5
+      ctx.globalAlpha = 0.55
       ctx.beginPath()
       ctx.moveTo(x, y)
       ctx.lineTo(x - nx * len, y - ny * len)
       ctx.stroke()
-      ctx.globalAlpha = 1
     }
 
-    // soft glow halo
-    const grd = ctx.createRadialGradient(x, y, 0, x, y, r * 2.4 * glow)
+    // soft glow halo (additive). Kept modest in alpha + radius so a DENSE resting
+    // pile (many overlapping halos) doesn't sum to a blown-out white block —
+    // individual grains must stay legible; only sparse/flowing dust really blooms.
+    const grd = ctx.createRadialGradient(x, y, 0, x, y, r * 2.05 * glow)
     grd.addColorStop(0, hex)
     grd.addColorStop(0.5, hex)
-    grd.addColorStop(1, 'rgba(255,255,255,0)')
-    ctx.globalAlpha = 0.5
+    grd.addColorStop(1, 'rgba(0,0,0,0)')
+    ctx.globalAlpha = 0.28
     ctx.fillStyle = grd
     ctx.beginPath()
-    ctx.arc(x, y, r * 2.4 * glow, 0, Math.PI * 2)
+    ctx.arc(x, y, r * 2.05 * glow, 0, Math.PI * 2)
     ctx.fill()
+    ctx.restore()
     ctx.globalAlpha = 1
 
     // star core

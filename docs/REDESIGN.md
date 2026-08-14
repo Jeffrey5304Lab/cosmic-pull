@@ -1,5 +1,12 @@
 # Cosmic Pull — Redesign Plan (Fable 5 pass, 2026-08-14)
 
+> ⚠️ **DIRECTION SUPERSEDED (2026-08-14, Fable 5 survey pass):** the "make
+> levels harder" thread below hit a dead end after three playtests. The new
+> direction — cozy-juice 80% / clever-spike 20%, with feedback + meta as the
+> real gaps — lives in **`docs/GAME-DIRECTION.md`**. Resume THERE. This file
+> stays authoritative for engineering guardrails (tests, `npm run shot`,
+> cup-offset rule, `REF_WASTE`).
+
 > Health-check + redesign driven after playtesting. Direction chosen by the user:
 > **cozy feel × genuinely fun logic × complex late-game puzzles.**
 > Front/mid game should relax and forgive; the back half should be a real
@@ -124,7 +131,8 @@ F3.
 - [x] Mechanic 1 — **chain pins** (`PinDef.releases`) + `chain.test.ts`
 - [x] Mechanic 2 — **gate-on-fill** (`WallDef.gate`) + `gate.test.ts`
 - [ ] Mechanic 3 — **wormhole portal** (teleport grains A→B) — not started
-- [ ] Author real levels using chain/gate + the cozy→complex 3-chapter recut
+- [x] Author Chapter 3 "Machine" (L21–25) — 5 gate/chain multi-step levels;
+      tight supply; rote-verified in `rote.test.ts` (monkey 25/23/20/15/5%)
 - [ ] F3b supply fairness: buffers already generous (recent fixes); revisit per level with playtest
 - [x] Polish: 3★ target in HUD  ·  [ ] locale decision (EN UI vs zh-TW hints)
 - [x] Headless screenshot harness (playwright, npm run shot) + visual pass done

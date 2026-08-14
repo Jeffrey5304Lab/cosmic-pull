@@ -251,12 +251,66 @@ body {
   margin: 0;
 }
 
-/* ── Level select grid ─────────────────────────────── */
+/* ── Win reward (✦ stardust banked) ────────────────── */
+.reward {
+  font-size: 20px;
+  color: var(--gold-deep);
+  margin: 2px 0 8px;
+  min-height: 24px;
+  letter-spacing: 0.5px;
+}
+.reward.pop {
+  animation: rewardpop 0.5s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+@keyframes rewardpop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.18);
+  }
+}
+/* menu subtitle: ★ total  ·  ✦ purse */
+#menu-sub .dot {
+  margin: 0 8px;
+  color: #c8bca4;
+}
+#menu-sub .dust {
+  color: var(--gold-deep);
+}
+
+/* ── Level select: night-sky "rebuild the constellations" map ── */
+.card.wide {
+  /* faint starfield so the level map reads as a night sky, not a spreadsheet */
+  background-image: radial-gradient(circle at 18% 12%, rgba(217, 138, 31, 0.16) 0 1.2px, transparent 1.6px),
+    radial-gradient(circle at 72% 26%, rgba(217, 138, 31, 0.13) 0 1px, transparent 1.4px),
+    radial-gradient(circle at 40% 62%, rgba(217, 138, 31, 0.12) 0 1px, transparent 1.4px),
+    radial-gradient(circle at 86% 74%, rgba(217, 138, 31, 0.14) 0 1.1px, transparent 1.5px),
+    radial-gradient(circle at 10% 88%, rgba(217, 138, 31, 0.12) 0 1px, transparent 1.4px);
+}
 .level-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 14px 0;
+}
+.chapter-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 2px 4px 6px;
+  font-size: 18px;
+  color: var(--gold-deep);
+}
+.chapter-title .chapter-prog {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.chapter-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
-  margin: 14px 0;
 }
 .level-cell {
   aspect-ratio: 1;
@@ -282,6 +336,12 @@ body {
   letter-spacing: 1px;
   color: var(--gold);
   height: 12px;
+}
+/* a 3★ level is a fully-lit star in the constellation */
+.level-cell.full {
+  background: #fff3d4;
+  border-color: var(--gold-deep);
+  box-shadow: 0 3px 0 var(--gold-deep), 0 0 10px rgba(245, 185, 66, 0.55);
 }
 .share-btn {
   margin-top: 12px;
