@@ -8,10 +8,12 @@ import { computeStars, earnedStardust } from './logic.ts'
 import { addStardust, loadProgress, pickTheme, recordWin, saveProgress, totalStars, type Progress } from './storage.ts'
 import { shareResult } from './sharecard.ts'
 import { applyI18n, hintFor, pullsLabel, t } from './i18n.ts'
+import { AD_REWARD, adsAvailable, initAds, showRewarded } from './ads.ts'
 import * as audio from './audio.ts'
 import * as haptics from './haptics.ts'
 
 applyI18n() // localise all static [data-i18n] markup before first paint
+void initAds() // best-effort AdMob init (native only; no-op on web)
 
 // ── DOM refs ──────────────────────────────────────────────────
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T
@@ -443,6 +445,7 @@ function openMenu(): void {
 function openShop(): void {
   hideAllOverlays()
   renderShop()
+  $('shop-ad').classList.toggle('hidden', !adsAvailable()) // only where ads exist
   el.shop.classList.remove('hidden')
 }
 
@@ -515,6 +518,20 @@ $('btn-menu').addEventListener('click', openMenu)
 $('menu-close').addEventListener('click', () => el.menu.classList.add('hidden'))
 $('btn-shop').addEventListener('click', openShop)
 $('shop-close').addEventListener('click', openMenu) // Back → the level map
+$('shop-ad').addEventListener('click', () => {
+  const btn = $<HTMLButtonElement>('shop-ad')
+  btn.disabled = true
+  void showRewarded().then((ok) => {
+    btn.disabled = false
+    if (ok) {
+      progress = addStardust(progress, AD_REWARD)
+      renderShop()
+    } else {
+      btn.textContent = t('ad_unavailable')
+      window.setTimeout(() => (btn.textContent = t('watch_ad')), 1600)
+    }
+  })
+})
 $('btn-restart').addEventListener('click', () => loadLevel(currentId))
 $('win-replay').addEventListener('click', () => loadLevel(currentId))
 $('win-share').addEventListener('click', () => {
