@@ -119,15 +119,41 @@ F3.
 - [x] F1-UI — gentle "board stuck" toast + restart nudge in main.ts (no auto-loss)
 - [x] F2 calm settle — `enableSleeping` + wake-on-pull
 - [x] F3 star-rule rework — dual-axis (pulls AND waste vs solution), `logic.test.ts`
-- [x] F4 telegraph bridges — downhill chevrons on slanted pins (⚠ visually UNVERIFIED)
+- [x] F4 telegraph bridges — reworked to sheen + drifting motes (screenshot-verified)
 - [x] UX polish — reduce-motion a11y, menu scroll, HUD truncation, 44pt targets, lose card
 - [x] Mechanic 1 — **chain pins** (`PinDef.releases`) + `chain.test.ts`
 - [x] Mechanic 2 — **gate-on-fill** (`WallDef.gate`) + `gate.test.ts`
 - [ ] Mechanic 3 — **wormhole portal** (teleport grains A→B) — not started
 - [ ] Author real levels using chain/gate + the cozy→complex 3-chapter recut
 - [ ] F3b supply fairness: buffers already generous (recent fixes); revisit per level with playtest
-- [ ] Polish: show 3★ target in HUD; locale decision (EN UI vs zh-TW hints)
-- [ ] Visual sign-off pass on F4 chevrons + a headless PNG harness (node-canvas)
+- [x] Polish: 3★ target in HUD  ·  [ ] locale decision (EN UI vs zh-TW hints)
+- [x] Headless screenshot harness (playwright, npm run shot) + visual pass done
+
+## Playtest findings + visual pass (2026-08-14, screenshot-verified)
+Simulated players (see the throwaway harnesses in git history) measured:
+- **Random "monkey" pulls beat 75.6% of the game**; 13/20 levels 100%.
+- **8 of 20 levels have exactly ONE pin** → zero decision. L20 "Grand Finale"
+  was a single tap.
+- **94% of casual wins earned 3★** → no mastery chase, no replay drive.
+- **"Timing" levels have no timing**: L8/L20 won at 13/13 tested pull moments.
+- The 5 trap levels (L3, L4, L11, L13, L18) are the *good* ones (0–16% monkey) —
+  the bridge/blocker read works, it's just deployed in only a quarter of the game.
+
+**Proven fix pattern:** convert load-bearing scenery into trap PINS. Applied to
+L20 (100% → **8%** monkey) and L7. ⚠️ It does NOT generalise: on L8 the funnel
+walls are obstacles, not supports (pulling one lets *more* stardust through) —
+that level needs real geometry work. Check with the sim before relabelling.
+
+**Visual pass done** (all verified via `npm run shot`, not guessed): hint toast
+no longer covers the cup on L1 (it did — the new player couldn't see the goal);
+cup rebuilt as a real vessel with halo/rim/shadow; goal number is a hand-drawn
+paper chip; bridge telegraph reworked (the blind chevrons read as scratches);
+coach arrow and walls warmed to match the palette; lava no longer reads as a
+sausage. HUD now shows the 3★ pull budget; Restart moved away from Sound.
+
+**Still open:** the remaining one-pin levels (L8, L9, L14, L19), the empty-board
+composition problem, the L5–L9 difficulty dead zone, locale decision, and
+authoring levels that actually use chain pins / gates.
 
 ### What NOT to trust without a human playtest
 - F4 chevron **appearance** (rendered blind).
