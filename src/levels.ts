@@ -109,7 +109,7 @@ export const LEVELS: LevelDef[] = [
       { id: 'hold', x: 50, y: 40, len: 26, thick: 3 },
     ],
     walls: [],
-    emitters: [{ x: 50, y: 28, w: 20, h: 10, count: 24 }],
+    emitters: [{ x: 50, y: 28, w: 20, h: 10, count: 17 }],
     cups: [{ id: 'c', x: 50, y: 128, w: 26, h: 20, need: 13 }],
     hazards: [{ x: 86, y: 126, w: 28, h: 10, kind: 'lava' }],
     stars: { pulls: [2, 2] },
