@@ -75,7 +75,12 @@ function loadLevel(id: number): void {
 }
 
 function updatePullCount(): void {
-  el.pullCount.textContent = sim.pulls === 1 ? '1 pull' : `${sim.pulls} pulls`
+  // Show the 3★ pull budget, not just a bare count — otherwise the rating feels
+  // arbitrary and there's nothing to play against.
+  const par = sim.level.stars?.pulls?.[0] ?? sim.level.solution?.length ?? sim.level.pins.length
+  const label = sim.pulls === 1 ? '1 pull' : `${sim.pulls} pulls`
+  el.pullCount.textContent = `${label} · ★★★ ≤ ${par}`
+  el.pullCount.classList.toggle('over-par', sim.pulls > par)
 }
 
 let hintTimer = 0

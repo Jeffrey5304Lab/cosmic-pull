@@ -65,6 +65,11 @@ body {
 .pull-count {
   font-size: 14px;
   color: var(--ink-soft);
+  white-space: nowrap;
+}
+/* past the 3★ budget — dim the target so the player knows it's slipped */
+.pull-count.over-par {
+  color: #b9ab93;
 }
 .icon-btn {
   width: 44px;
