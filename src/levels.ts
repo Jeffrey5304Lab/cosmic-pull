@@ -154,11 +154,14 @@ export const LEVELS: LevelDef[] = [
     name: 'Fountain',
     world: W,
     hint: '星塵撞上尖頂會往兩邊分流，兩杯都要滿',
-    pins: [{ id: 'hold', x: 50, y: 32, len: 38, thick: 3 }],
-    walls: [
-      { x: 43, y: 60, w: 20, h: 3, angle: -0.42 },
-      { x: 57, y: 60, w: 20, h: 3, angle: 0.42 },
+    pins: [
+      { id: 'hold', x: 50, y: 32, len: 38, thick: 3 },
+      // The peak that fans the fountain is pullable — and load-bearing. Take a
+      // half away and that side's stream drops straight into the void.
+      { id: 'peakL', x: 43, y: 60, len: 20, thick: 3, angle: -0.42 },
+      { id: 'peakR', x: 57, y: 60, len: 20, thick: 3, angle: 0.42 },
     ],
+    walls: [],
     emitters: [{ x: 50, y: 24, w: 22, h: 6, count: 30 }],
     cups: [
       { id: 'cl', x: 24, y: 128, w: 26, h: 20, need: 8 },
@@ -167,6 +170,7 @@ export const LEVELS: LevelDef[] = [
     hazards: [{ x: 50, y: 116, w: 12, h: 9, kind: 'void' }],
     stars: { pulls: [1, 1] },
     solution: [{ pin: 'hold', atMs: 200 }],
+    traps: ['peakL', 'peakR'],
   },
 
   // 8 ── moving hazard: time the pour past a sweeping void.
@@ -175,6 +179,10 @@ export const LEVELS: LevelDef[] = [
     name: 'Sweeper',
     world: W,
     hint: '黑洞會來回移動，抓準空檔再拔栓',
+    // TODO(redesign): still a one-pin level — a monkey wins 100% of the time.
+    // The wall→trap-pin conversion that fixed L7/L20 does NOT apply here: these
+    // funnel walls aren't load-bearing, they're obstacles (pulling one lets MORE
+    // stardust through, 21 vs 13). Needs real geometry work, not a relabel.
     pins: [{ id: 'a', x: 50, y: 36, len: 34, thick: 3 }],
     walls: [
       { x: 28, y: 66, w: 30, h: 3, angle: 0.5 },
@@ -493,11 +501,14 @@ export const LEVELS: LevelDef[] = [
     name: 'Grand Finale',
     world: W,
     hint: '大噴泉分流，中間黑洞會移動、兩側是岩漿——穩穩落杯 ✦',
-    pins: [{ id: 'hold', x: 50, y: 30, len: 38, thick: 3 }],
-    walls: [
-      { x: 43, y: 58, w: 20, h: 3, angle: -0.42 },
-      { x: 57, y: 58, w: 20, h: 3, angle: 0.42 },
+    pins: [
+      { id: 'hold', x: 50, y: 30, len: 38, thick: 3 },
+      // The fountain's split peak is now load-bearing: pull either half and the
+      // whole pour collapses straight down into the drifting black hole.
+      { id: 'splitL', x: 43, y: 58, len: 20, thick: 3, angle: -0.42 },
+      { id: 'splitR', x: 57, y: 58, len: 20, thick: 3, angle: 0.42 },
     ],
+    walls: [],
     emitters: [{ x: 50, y: 22, w: 22, h: 6, count: 32 }],
     cups: [
       { id: 'cl', x: 24, y: 130, w: 26, h: 20, need: 8 },
@@ -506,6 +517,7 @@ export const LEVELS: LevelDef[] = [
     hazards: [{ x: 50, y: 112, w: 14, h: 8, kind: 'void', moveX: 1.4, moveRange: 12 }],
     stars: { pulls: [1, 1] },
     solution: [{ pin: 'hold', atMs: 200 }],
+    traps: ['splitL', 'splitR'],
   },
 ]
 
