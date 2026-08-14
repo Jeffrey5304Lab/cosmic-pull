@@ -93,27 +93,29 @@ export const LEVELS: LevelDef[] = [
     traps: ['bl', 'br'],
   },
 
-  // 5 ── order matters: pull the drain plug before the flood.
+  // 5 ── THE RULE-BREAKER. By now the player has learned "pull the flat one,
+  //      never the slanted one" (L3/L4) — and that rule LOSES here: this ramp
+  //      doesn't bridge anything, it dumps into the lava. The cup is straight
+  //      down, so you must clear the ramp away FIRST, then release the pile.
+  //      Without levels like this the whole game is solvable by rote.
   {
     id: 5,
-    name: 'Order of Things',
+    name: 'The False Bridge',
     world: W,
-    // Zigzag descent: the stream switchbacks down two spans. Both are the road
-    // itself — pull either and the pour drops into the lava below. (It used to
-    // be two stacked pins over a cup directly beneath, where every order won.)
-    hint: '之字形下降——兩段斜橋都是路，拔掉哪一段都會掉進岩漿',
+    hint: '斜的不一定是橋——先看清楚它通到哪裡',
     pins: [
-      { id: 'hold', x: 72, y: 30, len: 22, thick: 3 },
-      { id: 'spanA', x: 58, y: 58, len: 40, thick: 4, angle: -0.6 },
-      { id: 'spanB', x: 36, y: 90, len: 40, thick: 4, angle: -0.6 },
+      { id: 'slide', x: 62, y: 74, len: 40, thick: 4, angle: 0.6 },
+      { id: 'hold', x: 50, y: 40, len: 26, thick: 3 },
     ],
     walls: [],
-    emitters: [{ x: 72, y: 18, w: 18, h: 12, count: 30 }],
-    cups: [{ id: 'c', x: 18, y: 130, w: 24, h: 18, need: 13 }],
-    hazards: [{ x: 62, y: 128, w: 40, h: 10, kind: 'lava' }],
-    stars: { pulls: [1, 1] },
-    solution: [{ pin: 'hold', atMs: 200 }],
-    traps: ['spanA', 'spanB'],
+    emitters: [{ x: 50, y: 28, w: 20, h: 10, count: 24 }],
+    cups: [{ id: 'c', x: 50, y: 128, w: 26, h: 20, need: 13 }],
+    hazards: [{ x: 86, y: 126, w: 28, h: 10, kind: 'lava' }],
+    stars: { pulls: [2, 2] },
+    solution: [
+      { pin: 'slide', atMs: 200 },
+      { pin: 'hold', atMs: 900 },
+    ],
   },
 
   // 6 ── colour match: gold to the gold cup, rose to the rose cup.
