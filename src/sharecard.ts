@@ -1,4 +1,5 @@
 import { PALETTE, constellationPoints, themeById } from './config.ts'
+import { LANG } from './i18n.ts'
 import type { LevelDef } from './types.ts'
 
 /**
@@ -20,7 +21,10 @@ export async function shareResult(level: LevelDef, stars: number, opts: ShareOpt
   const blob = await renderCard(level, stars, opts)
   if (!blob) return
   const file = new File([blob], 'cosmic-pull.png', { type: 'image/png' })
-  const text = `I cleared "${level.name}" in Cosmic Pull ${'★'.repeat(stars)}`
+  const text =
+    LANG === 'zh'
+      ? `我在 Cosmic Pull 通關了「${level.name}」${'★'.repeat(stars)}`
+      : `I cleared "${level.name}" in Cosmic Pull ${'★'.repeat(stars)}`
 
   const nav = navigator as Navigator & {
     canShare?: (data: { files: File[] }) => boolean
@@ -87,18 +91,19 @@ function renderCard(level: LevelDef, stars: number, opts: ShareOpts): Promise<Bl
 
   ctx.fillStyle = PALETTE.ink
   ctx.font = `70px ${font}`
-  ctx.fillText(`Level ${level.id} — ${level.name}`, SIZE / 2, 780)
+  const lvlLabel = LANG === 'zh' ? `第 ${level.id} 關` : `Level ${level.id}`
+  ctx.fillText(`${lvlLabel} — ${level.name}`, SIZE / 2, 780)
 
   // ✦ purse — a little brag + a hook back into the meta
   if (opts.stardust && opts.stardust > 0) {
     ctx.fillStyle = PALETTE.goldDeep
     ctx.font = `56px ${font}`
-    ctx.fillText(`✦ ${opts.stardust} stardust`, SIZE / 2, 866)
+    ctx.fillText(LANG === 'zh' ? `✦ ${opts.stardust} 星塵` : `✦ ${opts.stardust} stardust`, SIZE / 2, 866)
   }
 
   ctx.fillStyle = PALETTE.inkSoft
   ctx.font = `44px ${font}`
-  ctx.fillText('Pull the pins. Pour the stars. ✦', SIZE / 2, 960)
+  ctx.fillText(LANG === 'zh' ? '拔木栓，倒星塵。✦' : 'Pull the pins. Pour the stars. ✦', SIZE / 2, 960)
 
   return new Promise((resolve) => c.toBlob((b) => resolve(b), 'image/png'))
 }

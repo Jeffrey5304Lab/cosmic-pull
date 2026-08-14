@@ -7,8 +7,11 @@ import { LEVELS, LEVEL_COUNT, getLevel } from './levels.ts'
 import { computeStars, earnedStardust } from './logic.ts'
 import { addStardust, loadProgress, pickTheme, recordWin, saveProgress, totalStars, type Progress } from './storage.ts'
 import { shareResult } from './sharecard.ts'
+import { applyI18n, hintFor, pullsLabel, t } from './i18n.ts'
 import * as audio from './audio.ts'
 import * as haptics from './haptics.ts'
+
+applyI18n() // localise all static [data-i18n] markup before first paint
 
 // ── DOM refs ──────────────────────────────────────────────────
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T
@@ -110,15 +113,14 @@ function loadLevel(id: number): void {
   el.levelName.classList.toggle('spike', !!level.spike)
   updatePullCount()
   hideAllOverlays()
-  showHint(level.hint)
+  showHint(hintFor(level.id, level.hint))
 }
 
 function updatePullCount(): void {
   // Show the 3★ pull budget, not just a bare count — otherwise the rating feels
   // arbitrary and there's nothing to play against.
   const par = sim.level.stars?.pulls?.[0] ?? sim.level.solution?.length ?? sim.level.pins.length
-  const label = sim.pulls === 1 ? '1 pull' : `${sim.pulls} pulls`
-  el.pullCount.textContent = `${label} · ★★★ ≤ ${par}`
+  el.pullCount.textContent = `${pullsLabel(sim.pulls)} · ★★★ ≤ ${par}`
   el.pullCount.classList.toggle('over-par', sim.pulls > par)
 }
 
@@ -141,7 +143,7 @@ function showHint(text?: string): void {
  *  player. Surface a persistent, friendly toast and pulse the restart button. */
 function showStuck(): void {
   window.clearTimeout(hintTimer)
-  el.hint.textContent = '星塵流不動了 — 點 ↻ 再試一次'
+  el.hint.textContent = t('stuck')
   el.hint.classList.remove('hidden')
   el.hint.style.opacity = '1'
   el.btnRestart.classList.add('nudge')
@@ -374,15 +376,14 @@ let lastReward = 0
 function showWin(stars: number, reward = 0): void {
   lastStars = stars
   el.winStars.innerHTML = [1, 2, 3].map((i) => `<span class="${i <= stars ? '' : 'dim'}">★</span>`).join(' ')
-  el.winTitle.textContent =
-    stars === 3 ? 'Perfect pour!' : stars === 2 ? 'Nicely done!' : 'Cleared!'
+  el.winTitle.textContent = stars === 3 ? t('win_perfect') : stars === 2 ? t('win_nice') : t('win_cleared')
   // ✦ reward line: how much stardust this pour banked, plus the running purse.
   el.winReward.textContent = reward > 0 ? `✦ +${reward}   ·   ✦ ${progress.stardust}` : `✦ ${progress.stardust}`
   el.winReward.classList.remove('pop')
   void el.winReward.offsetWidth // restart the pop animation
   el.winReward.classList.add('pop')
   const isLast = currentId >= LEVEL_COUNT
-  ;($('win-next') as HTMLButtonElement).textContent = isLast ? 'Menu' : 'Next ›'
+  ;($('win-next') as HTMLButtonElement).textContent = isLast ? t('menu') : t('next')
   el.win.classList.remove('hidden')
   // reveal the stars one at a time with a rising chime — the satisfying beat
   const spans = Array.from(el.winStars.querySelectorAll('span'))
@@ -414,7 +415,8 @@ function openMenu(): void {
     section.className = 'chapter'
     const title = document.createElement('div')
     title.className = 'chapter-title'
-    title.innerHTML = `<span>✦ ${ch.name}</span><span class="chapter-prog">${got} / ${levels.length * 3}</span>`
+    const chName = t('chapter_' + ch.name.toLowerCase())
+    title.innerHTML = `<span>✦ ${chName}</span><span class="chapter-prog">${got} / ${levels.length * 3}</span>`
     const grid = document.createElement('div')
     grid.className = 'chapter-grid'
     for (const lv of levels) {
@@ -445,7 +447,7 @@ function openShop(): void {
 }
 
 function renderShop(): void {
-  el.shopSub.innerHTML = `<span class="dust">✦ ${progress.stardust}</span> to spend`
+  el.shopSub.innerHTML = `<span class="dust">✦ ${progress.stardust}</span> ${t('to_spend')}`
   el.shopGrid.innerHTML = ''
   for (const th of THEMES) {
     const owned = progress.owned.includes(th.id)
@@ -453,11 +455,11 @@ function renderShop(): void {
     const affordable = progress.stardust >= th.cost
     const cell = document.createElement('button')
     cell.className = 'theme-swatch' + (selected ? ' selected' : '') + (!owned && !affordable ? ' cant' : '')
-    const state = selected ? 'Selected' : owned ? 'Select' : `✦ ${th.cost}`
+    const state = selected ? t('selected') : owned ? t('select') : `✦ ${th.cost}`
     cell.innerHTML =
       `<span class="swatch-preview" style="background:linear-gradient(160deg, ${th.bg0}, ${th.bg1})">` +
       `<i style="background:${th.deco}"></i><i style="background:${th.deco}"></i><i style="background:${th.deco}"></i></span>` +
-      `<span class="swatch-name">${th.name}</span>` +
+      `<span class="swatch-name">${t('theme_' + th.id)}</span>` +
       `<span class="swatch-state">${state}</span>`
     cell.addEventListener('click', () => {
       if (selected) return
