@@ -45,4 +45,24 @@ describe('rote-rule resistance', () => {
     const l5 = LEVELS.find((l) => l.id === 5)!
     expect(roteRuleBeats(l5), 'L5 must break the rule, not reward it').toBe(false)
   })
+
+  it('every ✦ spike-tagged level actually resists the rote rule (marks stay honest)', () => {
+    // A level advertised as a challenge must earn it — if the flat-top-down habit
+    // clears a "spike", the badge is a lie. (Spikes were chosen from this exact
+    // measurement; this guards against a future edit softening one.)
+    for (const lv of LEVELS.filter((l) => l.spike)) {
+      expect(roteRuleBeats(lv), `L${lv.id} "${lv.name}" is tagged spike but the rote rule clears it`).toBe(false)
+    }
+  })
+
+  // Chapter 3 "Machine" (21–25) is the answer to "太簡單、不用動腦": every one of
+  // these gate/chain multi-step levels is built so the rote rule loses. If a
+  // future tweak lets the flat-top-down habit clear one, it stopped being a
+  // puzzle — fail loudly.
+  for (const id of [21, 22, 23, 24, 25]) {
+    it(`L${id} (Chapter 3) resists the rote rule`, () => {
+      const lv = LEVELS.find((l) => l.id === id)!
+      expect(roteRuleBeats(lv), `L${id} must not fall to flat-pull-top-to-bottom`).toBe(false)
+    })
+  }
 })

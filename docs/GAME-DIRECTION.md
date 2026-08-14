@@ -226,13 +226,27 @@ Survey 頭號發現是「可分享的瞬間」（Pull the Pin 靠分享起飛）
 套用玩家選的**主題背景**，並秀 **✦ 總數**。截圖 `share-card.png`（dusk 主題、
 L1 星座、✦82）。強化「重建星空」的病毒鉤子。
 
-**下一步**：
-- **P1-7 節奏重排（留給 Jeffrey 定難度）**：25 關重排成 8 關一拍
-  （6 順 → 1 個 ✦ 尖峰 → 1 放鬆拍），尖峰關掛 `✦` 標示 + 收緊供給。**難度手感
-  敏感、且會大動 `levels.ts`（有前 session 未 commit 改動）+ 衝擊 rote/solve/traps
-  測試**，需人工判斷，不自動做。
-- **P1-8 背景環境音 loop**（合成或 CC0，低風險，可自動做）。
-- **P2**：星雲染色、彗星輕推、墨水商店（貨幣花費出口）、每日流星關。
+### P1-7 尖峰標示系統（DONE，2026-08-14 Opus）— 節奏的「可讀」半
+不做有風險的整體重排/供給收緊（那是難度手感、易錯難復原，留給你 hands-on）。
+改做 Royal Match 的核心洞察：**把challenge關「標示」出來，難度就從 gotcha 變成
+公平的節奏尖峰**。用 `rote.test.ts` 客觀量測選尖峰（不猜）：真正抵抗 rote rule 的
+只有 **L5、L10、L21–25**（7 關；其餘 18 關 rote 都能破）。`LevelDef.spike` 標這 7 關，
+HUD 名稱掛金色 `✦`、選單格掛紫色 ✦ 徽章。新測試：每個 `spike` 關必須真的抵抗
+rote rule（標示不能造假）。截圖 spike-hud/spike-menu。
+**留給你 hands-on**：實體重排成 8 關一拍 + 供給收緊（最 feel-sensitive、易破壞
+solvability 的槓桿）。尖峰已標好，重排時照節奏擺即可。
+
+### P1-8 背景環境音（DONE，2026-08-14 Opus）
+`audio.ts` `ambientStart()`：極輕（level 0.022）的合成 drone 和弦（A/E/A + 慢速
+lowpass LFO 呼吸），首次 Play gesture 後淡入，`setMuted` 即時開關（♪ 鈕）。
+headless 確認不 crash、不擋其他音效。**聲音爽度/音量留你耳朵驗收**。
+
+### 章節 3「Machine」L21–25（本 commit 一併收入）
+這批多步 gate/chain 關卡是前面 session 寫好但一直沒 commit 的working 內容
+（REDESIGN.md 早有記載，rote/solve/logic 測試都依賴它們）。本次隨尖峰標示一起
+提交，並非本 session 新作。
+
+**P2（未做）**：星雲染色、彗星輕推、每日流星關；主題「拖尾樣式」變體（不碰顏色）。
 
 ## Survey 來源
 

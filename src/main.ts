@@ -85,7 +85,9 @@ function loadLevel(id: number): void {
   audio.pourStop()
   hoverPin = null
   el.btnRestart.classList.remove('nudge')
-  el.levelName.textContent = `${id}. ${level.name}`
+  // Spike levels wear a ✦ so a harder level reads as an intentional challenge.
+  el.levelName.textContent = `${level.spike ? '✦ ' : ''}${id}. ${level.name}`
+  el.levelName.classList.toggle('spike', !!level.spike)
   updatePullCount()
   hideAllOverlays()
   showHint(level.hint)
@@ -399,9 +401,10 @@ function openMenu(): void {
       const unlocked = lv.id <= progress.unlocked
       const stars = progress.stars[lv.id] ?? 0
       const cell = document.createElement('button')
-      cell.className = 'level-cell' + (unlocked ? '' : ' locked') + (stars >= 3 ? ' full' : '')
+      cell.className =
+        'level-cell' + (unlocked ? '' : ' locked') + (stars >= 3 ? ' full' : '') + (lv.spike && unlocked ? ' spike' : '')
       cell.innerHTML = unlocked
-        ? `<span>${lv.id}</span><span class="mini-stars">${'★'.repeat(stars)}</span>`
+        ? `${lv.spike ? '<span class="spike-mark">✦</span>' : ''}<span>${lv.id}</span><span class="mini-stars">${'★'.repeat(stars)}</span>`
         : `<span>🔒</span>`
       if (unlocked) cell.addEventListener('click', () => loadLevel(lv.id))
       grid.appendChild(cell)
@@ -517,8 +520,9 @@ $('title-play').addEventListener('click', () => {
   const title = $('title')
   title.classList.add('fade')
   window.setTimeout(() => title.classList.add('hidden'), 400)
-  // first user gesture — nudge the audio context awake
+  // first user gesture — nudge the audio context awake + start the cozy bed
   audio.sfxPull()
+  audio.ambientStart()
 })
 
 // ── boot ──────────────────────────────────────────────────────

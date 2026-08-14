@@ -6,8 +6,14 @@
 let ctx: AudioContext | null = null
 let muted = false
 
+/** Ambient pad level when playing (kept very low — cozy, never in the way). */
+const AMB_LEVEL = 0.022
+let ambGain: GainNode | null = null
+
 export function setMuted(m: boolean): void {
   muted = m
+  // live-toggle the ambient bed so the ♪ button silences/restores it instantly
+  if (ambGain && ctx) ambGain.gain.setTargetAtTime(m ? 0.0001 : AMB_LEVEL, ctx.currentTime, 0.3)
 }
 export function isMuted(): boolean {
   return muted
@@ -129,4 +135,50 @@ export function pourUpdate(active: boolean, fillRatio: number, intensity: number
 /** Silence the pour bed immediately (level change / win / lose). */
 export function pourStop(): void {
   if (pourGain && ctx) pourGain.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.04)
+}
+
+// ── ambient pad ───────────────────────────────────────────────
+// A soft, non-melodic drone chord that just breathes under the game — the cozy
+// "you can sit here as long as you like" bed (Water Sort's calm-atmosphere
+// retention lever). Pure synthesis, one slow filter LFO for gentle movement.
+function ensureAmbient(c: AudioContext): boolean {
+  if (ambGain) return true
+  try {
+    const master = c.createGain()
+    master.gain.value = 0.0001
+    const lp = c.createBiquadFilter()
+    lp.type = 'lowpass'
+    lp.frequency.value = 600
+    // slow filter sweep so the pad shimmers instead of sitting static
+    const lfo = c.createOscillator()
+    lfo.frequency.value = 0.06
+    const lfoGain = c.createGain()
+    lfoGain.gain.value = 150
+    lfo.connect(lfoGain).connect(lp.frequency)
+    lfo.start()
+    // a warm, wide A-minor-ish drone (root / fifth / octave), lightly detuned
+    for (const f of [110, 164.81, 220]) {
+      const o = c.createOscillator()
+      o.type = 'sine'
+      o.frequency.value = f
+      o.detune.value = (Math.random() - 0.5) * 7
+      const og = c.createGain()
+      og.gain.value = 0.33
+      o.connect(og).connect(lp)
+      o.start()
+    }
+    lp.connect(master).connect(c.destination)
+    ambGain = master
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** Start the ambient bed (idempotent). Call after the first user gesture. */
+export function ambientStart(): void {
+  const c = ac()
+  if (!c) return
+  if (!ensureAmbient(c)) return
+  ambGain!.gain.setTargetAtTime(AMB_LEVEL, c.currentTime, 1.2) // fade in gently
 }

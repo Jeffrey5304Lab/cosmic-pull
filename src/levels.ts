@@ -101,6 +101,7 @@ export const LEVELS: LevelDef[] = [
   {
     id: 5,
     name: 'The False Bridge',
+    spike: true,
     world: W,
     hint: '斜的不一定是橋——先看清楚它通到哪裡',
     pins: [
@@ -230,6 +231,7 @@ export const LEVELS: LevelDef[] = [
   {
     id: 10,
     name: 'Wrong Way Round',
+    spike: true,
     world: W,
     // RULE-BREAKER #2: the rote habit is "work top-to-bottom", and here that
     // loses. Release the flood first and it lands on the pile still sitting on
@@ -568,6 +570,219 @@ export const LEVELS: LevelDef[] = [
       { pin: 'shelf', atMs: 4200 },
     ],
     traps: ['splitL', 'splitR'],
+  },
+
+  // ── Chapter 3 "Machine" (21–25) — complex, multi-step dependency puzzles. ──
+  // Playtest feedback: "太簡單、不用動腦." These levels answer it. Each defeats
+  // the rote rule ("pull the flat pins top-to-bottom") because the correct
+  // order is the OPPOSITE — release bottom-up, or a loaded shelf gets buried
+  // and its overflow spills into the lava. Supply is tuned close to demand, so
+  // one careless spill loses. Verified in src/rote.test.ts.
+
+  // 21 ── Cascade: three shelves stacked over lava. Release bottom-up
+  //       (s3→s2→s1); pull a higher shelf first and it buries the loaded one
+  //       below, whose overflow spills off the sides into the lava.
+  {
+    id: 21,
+    name: 'Cascade',
+    spike: true,
+    world: W,
+    hint: '三層架子疊在岩漿上——由下往上拔，先放最底那層',
+    pins: [
+      { id: 's1', x: 50, y: 30, len: 22, thick: 3 },
+      { id: 's2', x: 50, y: 58, len: 22, thick: 3 },
+      { id: 's3', x: 50, y: 86, len: 22, thick: 3 },
+    ],
+    walls: [],
+    emitters: [
+      { x: 50, y: 20, w: 18, h: 9, count: 8 },
+      { x: 50, y: 48, w: 18, h: 9, count: 8 },
+      { x: 50, y: 76, w: 18, h: 9, count: 8 },
+    ],
+    cups: [{ id: 'c', x: 50, y: 130, w: 22, h: 16, need: 22 }],
+    hazards: [
+      { x: 18, y: 100, w: 20, h: 8, kind: 'lava' },
+      { x: 82, y: 100, w: 20, h: 8, kind: 'lava' },
+      { x: 18, y: 128, w: 16, h: 8, kind: 'lava' },
+      { x: 82, y: 128, w: 16, h: 8, kind: 'lava' },
+    ],
+    stars: { pulls: [3, 4] },
+    solution: [
+      { pin: 's3', atMs: 200 },
+      { pin: 's2', atMs: 2600 },
+      { pin: 's1', atMs: 5200 },
+    ],
+  },
+
+  // 22 ── Lock & Key: GATE dependency. The left cascade fills the key cup `ck`;
+  //       filling it opens a gate that drops the pile parked on it into `cm`.
+  //       Two dependent stages — botch the order trap and the gate never opens.
+  {
+    id: 22,
+    name: 'Lock & Key',
+    spike: true,
+    world: W,
+    hint: '由下往上填滿左邊的鑰匙杯，右邊閘門才會開，把星塵放進去',
+    pins: [
+      { id: 's1', x: 30, y: 26, len: 20, thick: 3 },
+      { id: 's2', x: 30, y: 52, len: 20, thick: 3 },
+      { id: 's3', x: 30, y: 78, len: 20, thick: 3 },
+    ],
+    walls: [
+      { x: 52, y: 104, w: 3, h: 70 }, // divider protects the gate column
+      { x: 76, y: 72, w: 28, h: 3, gate: 'ck' },
+    ],
+    emitters: [
+      { x: 30, y: 16, w: 16, h: 9, count: 8 },
+      { x: 30, y: 42, w: 16, h: 9, count: 8 },
+      { x: 30, y: 68, w: 16, h: 9, count: 8 },
+      { x: 76, y: 58, w: 24, h: 10, count: 14 }, // pile parked on the gate
+    ],
+    cups: [
+      { id: 'ck', x: 30, y: 128, w: 20, h: 16, need: 22 },
+      { id: 'cm', x: 76, y: 128, w: 24, h: 16, need: 12 },
+    ],
+    hazards: [
+      { x: 10, y: 100, w: 14, h: 8, kind: 'lava' },
+      { x: 46, y: 100, w: 8, h: 8, kind: 'lava' },
+      { x: 10, y: 128, w: 12, h: 8, kind: 'lava' },
+    ],
+    stars: { pulls: [3, 4] },
+    solution: [
+      { pin: 's3', atMs: 200 },
+      { pin: 's2', atMs: 2600 },
+      { pin: 's1', atMs: 5200 },
+    ],
+  },
+
+  // 23 ── Chain Reaction: four shelves, bottom-up. `trigger` CHAIN-releases
+  //       `catch` a beat later, so the bottom pair clears with one pull — but
+  //       the order (trigger→mid→flood) is still strict.
+  {
+    id: 23,
+    name: 'Chain Reaction',
+    spike: true,
+    world: W,
+    hint: '拔那根會連鎖鬆開下一層——一樣由下往上，別讓上層壓垮下層',
+    pins: [
+      { id: 'flood', x: 50, y: 26, len: 22, thick: 3 },
+      { id: 'mid', x: 50, y: 50, len: 22, thick: 3 },
+      { id: 'trigger', x: 50, y: 72, len: 22, thick: 3, releases: ['catch'] },
+      { id: 'catch', x: 50, y: 92, len: 22, thick: 3 },
+    ],
+    walls: [],
+    emitters: [
+      { x: 50, y: 17, w: 16, h: 8, count: 8 },
+      { x: 50, y: 41, w: 16, h: 8, count: 8 },
+      { x: 50, y: 63, w: 16, h: 8, count: 8 },
+      { x: 50, y: 84, w: 16, h: 8, count: 8 },
+    ],
+    cups: [{ id: 'c', x: 50, y: 132, w: 22, h: 14, need: 30 }],
+    hazards: [
+      { x: 18, y: 106, w: 20, h: 8, kind: 'lava' },
+      { x: 82, y: 106, w: 20, h: 8, kind: 'lava' },
+      { x: 18, y: 130, w: 14, h: 8, kind: 'lava' },
+      { x: 82, y: 130, w: 14, h: 8, kind: 'lava' },
+    ],
+    stars: { pulls: [3, 4] },
+    solution: [
+      { pin: 'trigger', atMs: 200 },
+      { pin: 'mid', atMs: 2800 },
+      { pin: 'flood', atMs: 5400 },
+    ],
+  },
+
+  // 24 ── Twin Locks: the central pile is parked on TWO stacked gates and only
+  //       reaches `cm` once BOTH side keys fill (gateA:ck1, gateB:ck2). Each key
+  //       is its own order trap — solve both cleanly or the pile stays locked.
+  {
+    id: 24,
+    name: 'Twin Locks',
+    spike: true,
+    world: W,
+    hint: '中間那堆鎖著兩道閘——左右兩個鑰匙杯都要填滿才放得出來',
+    pins: [
+      { id: 'lf', x: 18, y: 26, len: 14, thick: 3 },
+      { id: 'lh', x: 18, y: 50, len: 14, thick: 3 },
+      { id: 'rf', x: 82, y: 26, len: 14, thick: 3 },
+      { id: 'rh', x: 82, y: 50, len: 14, thick: 3 },
+    ],
+    walls: [
+      { x: 34, y: 100, w: 3, h: 60 },
+      { x: 66, y: 100, w: 3, h: 60 },
+      { x: 50, y: 58, w: 24, h: 3, gate: 'ck1' },
+      { x: 50, y: 86, w: 24, h: 3, gate: 'ck2' },
+    ],
+    emitters: [
+      { x: 18, y: 16, w: 12, h: 9, count: 6 },
+      { x: 18, y: 40, w: 12, h: 9, count: 10 },
+      { x: 82, y: 16, w: 12, h: 9, count: 6 },
+      { x: 82, y: 40, w: 12, h: 9, count: 10 },
+      { x: 50, y: 46, w: 20, h: 9, count: 14 }, // central pile on gateA
+    ],
+    cups: [
+      { id: 'ck1', x: 18, y: 128, w: 18, h: 16, need: 9 },
+      { id: 'ck2', x: 82, y: 128, w: 18, h: 16, need: 9 },
+      { id: 'cm', x: 50, y: 130, w: 22, h: 14, need: 12 },
+    ],
+    hazards: [
+      { x: 4, y: 96, w: 10, h: 8, kind: 'lava' },
+      { x: 32, y: 96, w: 6, h: 8, kind: 'lava' },
+      { x: 96, y: 96, w: 10, h: 8, kind: 'lava' },
+      { x: 68, y: 96, w: 6, h: 8, kind: 'lava' },
+    ],
+    stars: { pulls: [4, 5] },
+    solution: [
+      { pin: 'lh', atMs: 200 },
+      { pin: 'rh', atMs: 500 },
+      { pin: 'lf', atMs: 3200 },
+      { pin: 'rf', atMs: 3500 },
+    ],
+  },
+
+  // 25 ── The Machine (finale): order cascade on the left fills `cl`, which
+  //       opens the gate sealing the right route; then a CHAIN pull (`rshelf`
+  //       releases `rhelp`) drops the right piles into `cr`. Cascade + gate +
+  //       chain in one contraption.
+  {
+    id: 25,
+    name: 'The Machine',
+    spike: true,
+    world: W,
+    hint: '先由下往上填滿左杯開閘，再拔右邊那根把整疊放下去',
+    pins: [
+      { id: 's1', x: 30, y: 24, len: 18, thick: 3 },
+      { id: 's2', x: 30, y: 48, len: 18, thick: 3 },
+      { id: 's3', x: 30, y: 72, len: 18, thick: 3 },
+      { id: 'rshelf', x: 74, y: 60, len: 20, thick: 3, releases: ['rhelp'] },
+      { id: 'rhelp', x: 74, y: 40, len: 18, thick: 3 },
+    ],
+    walls: [
+      { x: 52, y: 100, w: 3, h: 60 },
+      { x: 74, y: 84, w: 26, h: 3, gate: 'cl' },
+    ],
+    emitters: [
+      { x: 30, y: 15, w: 14, h: 8, count: 7 },
+      { x: 30, y: 39, w: 14, h: 8, count: 7 },
+      { x: 30, y: 63, w: 14, h: 8, count: 7 },
+      { x: 74, y: 50, w: 20, h: 8, count: 7 }, // pile on rshelf
+      { x: 74, y: 30, w: 18, h: 8, count: 6 }, // pile on rhelp (chained)
+    ],
+    cups: [
+      { id: 'cl', x: 30, y: 126, w: 18, h: 16, need: 18 },
+      { id: 'cr', x: 74, y: 132, w: 20, h: 14, need: 11 },
+    ],
+    hazards: [
+      { x: 10, y: 98, w: 12, h: 8, kind: 'lava' },
+      { x: 47, y: 98, w: 6, h: 8, kind: 'lava' },
+    ],
+    stars: { pulls: [4, 5] },
+    solution: [
+      { pin: 's3', atMs: 200 },
+      { pin: 's2', atMs: 2600 },
+      { pin: 's1', atMs: 5000 },
+      { pin: 'rshelf', atMs: 8200 },
+    ],
   },
 ]
 

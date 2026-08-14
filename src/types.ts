@@ -97,6 +97,14 @@ export interface LevelDef {
   cups: CupDef[]
   hazards: HazardDef[]
   stars?: StarRule
+  /**
+   * Marks a "✦ 星雲試煉" challenge peak — a level that genuinely defeats the
+   * rote rule (verified in rote.test.ts). Surfaced in the UI so a harder level
+   * reads as an *intentional* spike ("this one's meant to make you think"),
+   * which is what keeps difficulty feeling fair rather than like a gotcha. Most
+   * levels are cozy/unmarked; spikes are the ~20% peaks of the cadence.
+   */
+  spike?: boolean
   /** one-line coaching shown the first time a mechanic appears */
   hint?: string
   /**
