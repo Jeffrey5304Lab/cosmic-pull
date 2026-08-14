@@ -10,6 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "shot": "node scripts/shoot.mjs",
+    "setup:native": "node scripts/setup-native.mjs",
+    "assets": "capacitor-assets generate --iconBackgroundColor '#F4E9D7' --iconBackgroundColorDark '#F4E9D7' --splashBackgroundColor '#F4E9D7' --splashBackgroundColorDark '#F4E9D7'",
     "cap:sync": "npm run build && cap sync",
     "cap:ios": "npm run build && cap sync ios && cap open ios",
     "cap:ios:release": "npm run build:release && cap sync ios && cap open ios",
