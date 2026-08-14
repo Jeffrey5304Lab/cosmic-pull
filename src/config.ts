@@ -67,6 +67,22 @@ export function themeById(id: string): SkyTheme {
   return THEMES.find((t) => t.id === id) ?? THEMES[0]
 }
 
+/**
+ * The per-level constellation, as **normalised** points in a 0..1 box, sorted
+ * left→right so a connecting line reads cleanly. Deterministic from the level
+ * id, so the win-screen sky and the share card draw the identical shape — the
+ * seed of the "rebuild the night sky" meta. Consumers scale it to their space.
+ */
+export function constellationPoints(levelId: number): { x: number; y: number }[] {
+  let seed = (levelId * 2654435761) >>> 0
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff)
+  const n = 4 + Math.floor(rnd() * 3) // 4..6 stars
+  const pts: { x: number; y: number }[] = []
+  for (let i = 0; i < n; i++) pts.push({ x: rnd(), y: rnd() })
+  pts.sort((a, b) => a.x - b.x)
+  return pts
+}
+
 // ─────────────────────────── AdMob ───────────────────────────
 export const ADMOB_LIVE = import.meta.env?.VITE_ADMOB_LIVE === '1'
 

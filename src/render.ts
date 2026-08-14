@@ -1,4 +1,4 @@
-import { PALETTE, THEMES, WORLD, grainHex, themeById, type SkyTheme } from './config.ts'
+import { PALETTE, THEMES, WORLD, constellationPoints, grainHex, themeById, type SkyTheme } from './config.ts'
 import type { GameSim } from './sim.ts'
 import type { StardustColor } from './types.ts'
 
@@ -98,16 +98,12 @@ export class Renderer {
   private winConstel: { id: number; pts: { x: number; y: number }[] } | null = null
   private constelFor(id: number): { x: number; y: number }[] {
     if (this.winConstel?.id === id) return this.winConstel.pts
-    let seed = (id * 2654435761) >>> 0
-    const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff)
-    const n = 4 + Math.floor(rnd() * 3) // 4..6 stars
+    // shared normalised shape → mapped into the world's sky band (top area)
     const cx = WORLD.w / 2
     const spanX = 58
     const top = 22
     const spanY = 30
-    const pts: { x: number; y: number }[] = []
-    for (let i = 0; i < n; i++) pts.push({ x: cx - spanX / 2 + rnd() * spanX, y: top + rnd() * spanY })
-    pts.sort((a, b) => a.x - b.x) // left→right so the connecting line reads cleanly
+    const pts = constellationPoints(id).map((p) => ({ x: cx - spanX / 2 + p.x * spanX, y: top + p.y * spanY }))
     this.winConstel = { id, pts }
     return pts
   }

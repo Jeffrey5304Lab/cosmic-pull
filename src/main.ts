@@ -493,7 +493,7 @@ $('shop-close').addEventListener('click', openMenu) // Back → the level map
 $('btn-restart').addEventListener('click', () => loadLevel(currentId))
 $('win-replay').addEventListener('click', () => loadLevel(currentId))
 $('win-share').addEventListener('click', () => {
-  void shareResult(sim.level, lastStars)
+  void shareResult(sim.level, lastStars, { theme: progress.theme, stardust: progress.stardust })
 })
 $('lose-retry').addEventListener('click', () => loadLevel(currentId))
 $('lose-menu').addEventListener('click', openMenu)
