@@ -98,26 +98,22 @@ export const LEVELS: LevelDef[] = [
     id: 5,
     name: 'Order of Things',
     world: W,
-    hint: '先後順序會影響結果，多想一步',
+    // Zigzag descent: the stream switchbacks down two spans. Both are the road
+    // itself — pull either and the pour drops into the lava below. (It used to
+    // be two stacked pins over a cup directly beneath, where every order won.)
+    hint: '之字形下降——兩段斜橋都是路，拔掉哪一段都會掉進岩漿',
     pins: [
-      { id: 'gate', x: 50, y: 60, len: 26, thick: 3 },
-      { id: 'top', x: 50, y: 30, len: 26, thick: 3 },
+      { id: 'hold', x: 72, y: 30, len: 22, thick: 3 },
+      { id: 'spanA', x: 58, y: 58, len: 40, thick: 4, angle: -0.6 },
+      { id: 'spanB', x: 36, y: 90, len: 40, thick: 4, angle: -0.6 },
     ],
-    walls: [
-      { x: 30, y: 90, w: 30, h: 3, angle: 0.5 },
-      { x: 70, y: 90, w: 30, h: 3, angle: -0.5 },
-    ],
-    emitters: [{ x: 50, y: 20, w: 22, h: 10, count: 28 }],
-    cups: [{ id: 'c', x: 50, y: 128, w: 22, h: 18, need: 15 }],
-    hazards: [
-      { x: 14, y: 108, w: 16, h: 8, kind: 'lava' },
-      { x: 86, y: 108, w: 16, h: 8, kind: 'lava' },
-    ],
-    stars: { pulls: [2, 2] },
-    solution: [
-      { pin: 'top', atMs: 200 },
-      { pin: 'gate', atMs: 1400 },
-    ],
+    walls: [],
+    emitters: [{ x: 72, y: 18, w: 18, h: 12, count: 30 }],
+    cups: [{ id: 'c', x: 18, y: 130, w: 24, h: 18, need: 13 }],
+    hazards: [{ x: 62, y: 128, w: 40, h: 10, kind: 'lava' }],
+    stars: { pulls: [1, 1] },
+    solution: [{ pin: 'hold', atMs: 200 }],
+    traps: ['spanA', 'spanB'],
   },
 
   // 6 ── colour match: gold to the gold cup, rose to the rose cup.
@@ -125,26 +121,32 @@ export const LEVELS: LevelDef[] = [
     id: 6,
     name: 'True Colours',
     world: W,
-    hint: '顏色要對！只有相符的星塵會被杯子收下',
+    // Each colour rides its own span out to its matching cup, with lava down
+    // the middle. Pull a span and that colour is gone — and only that colour
+    // can fill its cup, so it's unrecoverable.
+    hint: '顏色要對！每種顏色都靠自己那座橋出去——拔掉就再也補不回來',
     pins: [
-      { id: 'g', x: 28, y: 40, len: 26, thick: 3 },
-      { id: 'r', x: 72, y: 40, len: 26, thick: 3 },
+      { id: 'g', x: 34, y: 36, len: 22, thick: 3 },
+      { id: 'r', x: 66, y: 36, len: 22, thick: 3 },
+      { id: 'bg', x: 30, y: 72, len: 38, thick: 4, angle: -0.55 },
+      { id: 'br', x: 70, y: 72, len: 38, thick: 4, angle: 0.55 },
     ],
-    walls: [{ x: 50, y: 62, w: 3, h: 34 }],
+    walls: [],
     emitters: [
-      { x: 28, y: 28, w: 20, h: 10, count: 18, color: 'gold' },
-      { x: 72, y: 28, w: 20, h: 10, count: 18, color: 'rose' },
+      { x: 34, y: 24, w: 18, h: 10, count: 20, color: 'gold' },
+      { x: 66, y: 24, w: 18, h: 10, count: 20, color: 'rose' },
     ],
     cups: [
-      { id: 'cg', x: 26, y: 122, w: 22, h: 20, need: 10, color: 'gold' },
-      { id: 'cr', x: 74, y: 122, w: 22, h: 20, need: 10, color: 'rose' },
+      { id: 'cg', x: 14, y: 124, w: 22, h: 20, need: 10, color: 'gold' },
+      { id: 'cr', x: 86, y: 124, w: 22, h: 20, need: 10, color: 'rose' },
     ],
-    hazards: [],
+    hazards: [{ x: 50, y: 126, w: 28, h: 10, kind: 'lava' }],
     stars: { pulls: [2, 2] },
     solution: [
       { pin: 'g', atMs: 200 },
       { pin: 'r', atMs: 400 },
     ],
+    traps: ['bg', 'br'],
   },
 
   // 7 ── fountain: one pile splits over a peak into two cups. One pull, but the
@@ -281,22 +283,24 @@ export const LEVELS: LevelDef[] = [
     id: 12,
     name: 'Colour Guard',
     world: W,
-    hint: '顏色要配對，中間還有黑洞',
+    hint: '顏色要配對。中間是黑洞，兩座橋各自把顏色送出去——別動它們',
     pins: [
-      { id: 'g', x: 24, y: 38, len: 16, thick: 3 },
-      { id: 'r', x: 76, y: 38, len: 16, thick: 3 },
+      { id: 'g', x: 34, y: 38, len: 18, thick: 3 },
+      { id: 'r', x: 66, y: 38, len: 18, thick: 3 },
+      { id: 'bg', x: 30, y: 84, len: 30, thick: 4, angle: -0.55 },
+      { id: 'br', x: 70, y: 84, len: 30, thick: 4, angle: 0.55 },
     ],
     walls: [
       { x: 38, y: 112, w: 3, h: 28 },
       { x: 62, y: 112, w: 3, h: 28 },
     ],
     emitters: [
-      { x: 24, y: 26, w: 12, h: 12, count: 15, color: 'gold' },
-      { x: 76, y: 26, w: 12, h: 12, count: 15, color: 'rose' },
+      { x: 34, y: 26, w: 14, h: 12, count: 16, color: 'gold' },
+      { x: 66, y: 26, w: 14, h: 12, count: 16, color: 'rose' },
     ],
     cups: [
-      { id: 'cg', x: 22, y: 124, w: 24, h: 22, need: 9, color: 'gold' },
-      { id: 'cr', x: 78, y: 124, w: 24, h: 22, need: 9, color: 'rose' },
+      { id: 'cg', x: 14, y: 120, w: 22, h: 22, need: 9, color: 'gold' },
+      { id: 'cr', x: 86, y: 120, w: 22, h: 22, need: 9, color: 'rose' },
     ],
     hazards: [{ x: 50, y: 128, w: 18, h: 10, kind: 'void' }],
     stars: { pulls: [2, 2] },
@@ -304,6 +308,7 @@ export const LEVELS: LevelDef[] = [
       { pin: 'g', atMs: 200 },
       { pin: 'r', atMs: 400 },
     ],
+    traps: ['bg', 'br'],
   },
 
   // 13 ── twin keystones: two bridges, two cups, outer lava. Leave both bridges.
@@ -405,22 +410,24 @@ export const LEVELS: LevelDef[] = [
     id: 16,
     name: 'Void Crossing',
     world: W,
-    hint: '兩種顏色，中間有游走的黑洞',
+    hint: '兩種顏色各走一座橋出去，中間的黑洞還會游走',
     pins: [
-      { id: 'g', x: 22, y: 40, len: 16, thick: 3 },
-      { id: 'a', x: 78, y: 40, len: 16, thick: 3 },
+      { id: 'g', x: 32, y: 40, len: 16, thick: 3 },
+      { id: 'a', x: 68, y: 40, len: 16, thick: 3 },
+      { id: 'bg', x: 30, y: 84, len: 30, thick: 4, angle: -0.55 },
+      { id: 'ba', x: 70, y: 84, len: 30, thick: 4, angle: 0.55 },
     ],
     walls: [
       { x: 38, y: 108, w: 3, h: 34 },
       { x: 62, y: 108, w: 3, h: 34 },
     ],
     emitters: [
-      { x: 22, y: 28, w: 12, h: 12, count: 16, color: 'gold' },
-      { x: 78, y: 28, w: 12, h: 12, count: 16, color: 'aqua' },
+      { x: 32, y: 28, w: 12, h: 12, count: 16, color: 'gold' },
+      { x: 68, y: 28, w: 12, h: 12, count: 16, color: 'aqua' },
     ],
     cups: [
-      { id: 'cg', x: 22, y: 122, w: 24, h: 22, need: 8, color: 'gold' },
-      { id: 'ca', x: 78, y: 122, w: 24, h: 22, need: 8, color: 'aqua' },
+      { id: 'cg', x: 14, y: 120, w: 22, h: 22, need: 8, color: 'gold' },
+      { id: 'ca', x: 86, y: 120, w: 22, h: 22, need: 8, color: 'aqua' },
     ],
     hazards: [{ x: 50, y: 104, w: 14, h: 8, kind: 'void', moveX: 1.4, moveRange: 14 }],
     stars: { pulls: [2, 2] },
@@ -428,6 +435,7 @@ export const LEVELS: LevelDef[] = [
       { pin: 'g', atMs: 200 },
       { pin: 'a', atMs: 300 },
     ],
+    traps: ['bg', 'ba'],
   },
 
   // 17 ── three colours, three cups.
@@ -435,6 +443,10 @@ export const LEVELS: LevelDef[] = [
     id: 17,
     name: 'Rainbow Row',
     world: W,
+    // TODO(redesign): still ~96% monkey-winnable. Making the lane dividers
+    // pullable was tried and reverted — with each cup directly under its own
+    // pile the colours never actually mix, so the "trap" had no teeth and would
+    // have been a fake choice. Needs the offset-cup treatment (see L12/L16).
     hint: '三種顏色，各就各位',
     pins: [
       { id: 'l', x: 20, y: 40, len: 13, thick: 3 },
@@ -462,6 +474,7 @@ export const LEVELS: LevelDef[] = [
       { pin: 'm', atMs: 350 },
       { pin: 'r', atMs: 500 },
     ],
+
   },
 
   // 18 ── colour + bridge: each colour rides its own bridge to its cup. Pull a
