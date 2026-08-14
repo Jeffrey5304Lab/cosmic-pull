@@ -155,6 +155,55 @@ sausage. HUD now shows the 3★ pull budget; Restart moved away from Sound.
 composition problem, the L5–L9 difficulty dead zone, locale decision, and
 authoring levels that actually use chain pins / gates.
 
+## ▶ NEXT SESSION STARTS HERE (handoff, 2026-08-14)
+
+Branch `redesign/foundation`, 23 commits, not merged. 76 tests green, build clean.
+
+### The live problem: it is still too easy
+Three rounds of playtesting, same verdict: *"完全沒有難度可言，都是無腦破關,
+一點都不有趣, 沒有揭謎的感覺"* and *"遊戲邏輯都太直觀根本不需要動腦"*.
+
+**Do not respond by tweaking more level geometry — that was tried and it did not
+work.** The decision space itself is too shallow: 2–4 pins per level means a
+dozen possible plays, so guessing beats thinking. Levels L5 "The False Bridge"
+and L10 "Wrong Way Round" DO break the rote rule (verified) but they only cost
+the player one failure, then they're solved forever. One layer deep.
+
+### What to actually build
+Combine these two — this is the agreed direction:
+1. **Multi-step dependency machines** using the two mechanics that are built,
+   tested, and still barely used: `WallDef.gate` (fill cup A ⇒ barrier to B
+   opens) and `PinDef.releases` (chain reaction). Chain them so reaching cup C
+   requires filling B, which requires splitting the stream at A — the player has
+   to plan three steps ahead instead of reading one ramp.
+2. **Tight supply.** Every level currently carries 30–50% slack, so sloppy play
+   still wins. Cut to *just enough* + a small buffer. This is the master
+   difficulty knob.
+Target 5–6 such levels, 6–10 pins each.
+
+### Metrics that actually matter (in that order)
+- `src/rote.test.ts` — **the honest one.** The learned rule "pull the flat pins
+  top-to-bottom, never the slanted ones" must NOT clear a level. It currently
+  clears **18/20**. Drive that down. A monkey/random metric is misleading: people
+  don't pull at random, they learn a rule, and chasing the monkey number is what
+  produced eight near-identical levels in the first place.
+- Solvability + traps + stuck suites must stay green.
+- `REF_WASTE` in `logic.ts` must be regenerated whenever a level changes (replay
+  each `solution`, record `sim.wasted`), or `logic.test.ts` fails.
+
+### Hard-won rules (do not relearn these)
+- **A cup directly under its pile makes every ramp decoration.** This was the
+  root cause of every mindless level. Offset the cup so the span is load-bearing.
+  Verified three times (L8's "funnel" actually *reduced* throughput; L15 chutes
+  and L17 dividers were the same trap — all documented in-code).
+- **An obvious trap is not a puzzle.** Telegraphing the bridges made it worse.
+- `npm run shot` renders any level/UI to `docs/shots/` — never change visuals
+  blind again (the first bridge telegraph shipped looking like scratches).
+
+### Also still open
+L6/L7/L8/L9 fall to the rote rule; L15/L17 need the offset-cup rebuild; empty
+board composition; locale (EN UI vs zh-TW hints); portal mechanic.
+
 ### What NOT to trust without a human playtest
 - F4 chevron **appearance** (rendered blind).
 - F3 star **tolerances** (`tol3`/`tol2` in logic.ts) — mechanism proven, feel untuned.
