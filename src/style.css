@@ -120,8 +120,11 @@ body {
 .hint {
   position: absolute;
   left: 50%;
-  bottom: 5%;
-  transform: translateX(-50%);
+  /* Sit in the empty mid-band: cups live at the bottom of the board and the
+   * pile/pins at the top, so anchoring low used to cover the cup — the one
+   * thing a new player must see. */
+  top: 52%;
+  transform: translate(-50%, -50%);
   max-width: 84%;
   padding: 10px 16px;
   background: rgba(43, 38, 32, 0.92);
