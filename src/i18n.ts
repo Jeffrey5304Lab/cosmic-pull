@@ -55,6 +55,9 @@ const EN: Dict = {
   privacy_options: 'Ad privacy options',
   double_reward: 'Watch ad · ✦ ×2',
   hint_ad: 'Stuck? Watch an ad for a hint',
+  daily_title: 'Daily stardust',
+  daily_collect: 'Collect',
+  daily_more: 'come back tomorrow for more',
   theme_parchment: 'Parchment',
   theme_dusk: 'Dusk',
   theme_dawn: 'Dawn',
@@ -96,6 +99,9 @@ const ZH: Dict = {
   privacy_options: '廣告隱私設定',
   double_reward: '看廣告 · ✦ ×2',
   hint_ad: '卡住了？看廣告拿提示',
+  daily_title: '每日星塵',
+  daily_collect: '收下',
+  daily_more: '明天再來還有更多',
   theme_parchment: '羊皮紙',
   theme_dusk: '暮色',
   theme_dawn: '晨曦',
@@ -112,6 +118,11 @@ export function t(key: string): string {
 /** Pull count with correct wording per language. */
 export function pullsLabel(n: number): string {
   return LANG === 'zh' ? `${n} 拔` : n === 1 ? '1 pull' : `${n} pulls`
+}
+
+/** Daily streak line — the ordinal sits before the number in zh, after in en. */
+export function streakLabel(day: number): string {
+  return LANG === 'zh' ? `第 ${day} 天 · ${t('daily_more')}` : `Day ${day} · ${t('daily_more')}`
 }
 
 // English level hints (the inline zh-TW `hint` on each level is the zh copy).
@@ -147,6 +158,40 @@ const HINT_EN: Record<number, string> = {
 export function hintFor(id: number, zhHint?: string): string | undefined {
   if (LANG === 'zh') return zhHint
   return HINT_EN[id] ?? zhHint
+}
+
+// Chinese level titles (the inline `name` on each level is the English copy).
+const NAME_ZH: Record<number, string> = {
+  1: '第一拔',
+  2: '小心岩漿',
+  3: '別拔那座橋',
+  4: '該拔哪幾根？',
+  5: '假橋',
+  6: '顏色歸位',
+  7: '噴泉',
+  8: '掃描者',
+  9: '灼熱時機',
+  10: '順序反了',
+  11: '拱心石',
+  12: '顏色守衛',
+  13: '雙拱心石',
+  14: '雙重橫掃',
+  15: '清空層架',
+  16: '虛空穿越',
+  17: '彩虹列',
+  18: '彩色橋',
+  19: '雪崩',
+  20: '終章',
+  21: '層瀑',
+  22: '鎖與鑰',
+  23: '連鎖反應',
+  24: '雙鎖',
+  25: '大機關',
+}
+
+/** Localised level title (keeps the level list readable in either language). */
+export function nameFor(id: number, enName: string): string {
+  return LANG === 'zh' ? (NAME_ZH[id] ?? enName) : enName
 }
 
 /** Fill every [data-i18n] textContent and [data-i18n-aria] aria-label on boot. */

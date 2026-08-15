@@ -435,6 +435,18 @@ body {
   background: #fff8ec;
   font-size: 17px;
 }
+/* daily stardust card */
+.daily-mark {
+  font-size: 54px;
+  color: var(--gold);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+#daily .reward {
+  font-size: 30px;
+  margin: 4px 0 14px;
+}
+
 /* rewarded-ad calls to action — offered, never forced */
 .double-btn {
   margin: 2px 0 6px;

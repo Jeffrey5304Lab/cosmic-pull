@@ -1,5 +1,5 @@
 import { PALETTE, constellationPoints, themeById } from './config.ts'
-import { LANG } from './i18n.ts'
+import { LANG, nameFor } from './i18n.ts'
 import type { LevelDef } from './types.ts'
 
 /**
@@ -23,8 +23,8 @@ export async function shareResult(level: LevelDef, stars: number, opts: ShareOpt
   const file = new File([blob], 'cosmic-pull.png', { type: 'image/png' })
   const text =
     LANG === 'zh'
-      ? `我在 Cosmic Pull 通關了「${level.name}」${'★'.repeat(stars)}`
-      : `I cleared "${level.name}" in Cosmic Pull ${'★'.repeat(stars)}`
+      ? `我在 Cosmic Pull 通關了「${nameFor(level.id, level.name)}」${'★'.repeat(stars)}`
+      : `I cleared "${nameFor(level.id, level.name)}" in Cosmic Pull ${'★'.repeat(stars)}`
 
   const nav = navigator as Navigator & {
     canShare?: (data: { files: File[] }) => boolean
@@ -92,7 +92,7 @@ function renderCard(level: LevelDef, stars: number, opts: ShareOpts): Promise<Bl
   ctx.fillStyle = PALETTE.ink
   ctx.font = `70px ${font}`
   const lvlLabel = LANG === 'zh' ? `第 ${level.id} 關` : `Level ${level.id}`
-  ctx.fillText(`${lvlLabel} — ${level.name}`, SIZE / 2, 780)
+  ctx.fillText(`${lvlLabel} — ${nameFor(level.id, level.name)}`, SIZE / 2, 780)
 
   // ✦ purse — a little brag + a hook back into the meta
   if (opts.stardust && opts.stardust > 0) {

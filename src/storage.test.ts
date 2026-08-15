@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { addStardust, loadProgress, pickTheme, recordWin } from './storage.ts'
+import { addStardust, claimDaily, loadProgress, pickTheme, recordWin } from './storage.ts'
+import { dailyReward, daysBetween, today } from './logic.ts'
 
 // Minimal localStorage shim (vitest runs in node — no DOM storage by default).
 const store = new Map<string, string>()
@@ -46,6 +47,52 @@ describe('storage schema v2 (additive stardust migration)', () => {
     p = recordWin(p, 1, 3, 25)
     expect(p.stardust).toBe(9)
     expect(p.stars[1]).toBe(3)
+  })
+})
+
+describe('daily stardust', () => {
+  beforeEach(() => store.clear())
+
+  it('grants on the first play and starts a streak', () => {
+    const got = claimDaily(loadProgress(), '2026-08-15', Number.NaN, dailyReward)!
+    expect(got.streak).toBe(1)
+    expect(got.amount).toBe(dailyReward(1))
+    expect(got.progress.stardust).toBe(dailyReward(1))
+  })
+
+  it('cannot be claimed twice on the same day', () => {
+    const first = claimDaily(loadProgress(), '2026-08-15', Number.NaN, dailyReward)!
+    expect(claimDaily(first.progress, '2026-08-15', 0, dailyReward)).toBeNull()
+    expect(loadProgress().stardust).toBe(first.amount) // no double-dip
+  })
+
+  it('extends the streak on consecutive days and pays more', () => {
+    let p = claimDaily(loadProgress(), '2026-08-15', Number.NaN, dailyReward)!
+    const day1 = p.amount
+    p = claimDaily(p.progress, '2026-08-16', 1, dailyReward)!
+    expect(p.streak).toBe(2)
+    expect(p.amount).toBeGreaterThan(day1)
+  })
+
+  it('restarts the streak after a missed day but keeps earned stardust', () => {
+    let p = claimDaily(loadProgress(), '2026-08-15', Number.NaN, dailyReward)!
+    p = claimDaily(p.progress, '2026-08-16', 1, dailyReward)!
+    const banked = p.progress.stardust
+    p = claimDaily(p.progress, '2026-08-20', 4, dailyReward)! // gap
+    expect(p.streak).toBe(1) // restarted
+    expect(p.progress.stardust).toBeGreaterThan(banked) // never loses what was earned
+  })
+
+  it('caps the reward so it cannot grow forever', () => {
+    expect(dailyReward(7)).toBe(dailyReward(50))
+    expect(dailyReward(1)).toBeLessThan(dailyReward(7))
+  })
+
+  it('daysBetween / today behave on real calendar dates', () => {
+    expect(daysBetween('2026-08-15', '2026-08-16')).toBe(1)
+    expect(daysBetween('2026-08-31', '2026-09-01')).toBe(1) // month rollover
+    expect(daysBetween('2026-12-31', '2027-01-01')).toBe(1) // year rollover
+    expect(today(new Date(2026, 7, 5))).toBe('2026-08-05') // zero-padded, local
   })
 })
 

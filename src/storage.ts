@@ -14,9 +14,22 @@ export interface Progress {
   owned: string[]
   /** currently selected sky-theme id. */
   theme: string
+  /** YYYY-MM-DD of the last claimed daily bonus ('' = never). */
+  lastDaily: string
+  /** consecutive days claimed (1-based; resets after a missed day). */
+  streak: number
 }
 
-const DEFAULT: Progress = { unlocked: 1, stars: {}, muted: false, stardust: 0, owned: ['parchment'], theme: 'parchment' }
+const DEFAULT: Progress = {
+  unlocked: 1,
+  stars: {},
+  muted: false,
+  stardust: 0,
+  owned: ['parchment'],
+  theme: 'parchment',
+  lastDaily: '',
+  streak: 0,
+}
 
 export function loadProgress(): Progress {
   try {
@@ -34,6 +47,8 @@ export function loadProgress(): Progress {
       stardust: p.stardust ?? 0,
       owned,
       theme: owned.includes(p.theme ?? '') ? (p.theme as string) : 'parchment',
+      lastDaily: p.lastDaily ?? '',
+      streak: p.streak ?? 0,
     }
   } catch {
     return { ...DEFAULT, owned: [...DEFAULT.owned] }
@@ -66,6 +81,23 @@ export function addStardust(p: Progress, n: number): Progress {
   const next: Progress = { ...p, stardust: Math.max(0, p.stardust + Math.round(n)) }
   saveProgress(next)
   return next
+}
+
+/**
+ * Claim today's daily ✦ if it hasn't been claimed yet.
+ *
+ * Streak grows when you return the next day and restarts after a gap — but a
+ * missed day never costs stardust you already earned (cozy: no punishment, just
+ * a smaller bonus). Returns the granted amount + the new progress, or null if
+ * today is already claimed.
+ */
+export function claimDaily(p: Progress, todayStr: string, gapDays: number, amountFor: (streak: number) => number): { progress: Progress; amount: number; streak: number } | null {
+  if (p.lastDaily === todayStr) return null // already claimed today
+  const streak = gapDays === 1 ? p.streak + 1 : 1 // consecutive day extends, else restart
+  const amount = amountFor(streak)
+  const next: Progress = { ...p, stardust: p.stardust + amount, lastDaily: todayStr, streak }
+  saveProgress(next)
+  return { progress: next, amount, streak }
 }
 
 /**

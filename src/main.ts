@@ -4,10 +4,10 @@ import { GameSim } from './sim.ts'
 import { Renderer } from './render.ts'
 import { Particles } from './particles.ts'
 import { LEVELS, LEVEL_COUNT, getLevel } from './levels.ts'
-import { computeStars, earnedStardust } from './logic.ts'
-import { addStardust, loadProgress, pickTheme, recordWin, saveProgress, totalStars, type Progress } from './storage.ts'
+import { computeStars, dailyReward, daysBetween, earnedStardust, today } from './logic.ts'
+import { addStardust, claimDaily, loadProgress, pickTheme, recordWin, saveProgress, totalStars, type Progress } from './storage.ts'
 import { shareResult } from './sharecard.ts'
-import { applyI18n, hintFor, pullsLabel, t } from './i18n.ts'
+import { applyI18n, hintFor, nameFor, pullsLabel, streakLabel, t } from './i18n.ts'
 import { AD_REWARD, adsAvailable, initAds, privacyOptionsAvailable, showPrivacyOptions, showRewarded } from './ads.ts'
 import * as audio from './audio.ts'
 import * as haptics from './haptics.ts'
@@ -34,6 +34,9 @@ const el = {
   menu: $('menu'),
   menuSub: $('menu-sub'),
   levelGrid: $('level-grid'),
+  daily: $('daily'),
+  dailySub: $('daily-sub'),
+  dailyAmount: $('daily-amount'),
   shop: $('shop'),
   shopSub: $('shop-sub'),
   shopGrid: $('shop-grid'),
@@ -115,7 +118,7 @@ function loadLevel(id: number): void {
   hoverPin = null
   el.btnRestart.classList.remove('nudge')
   // Spike levels wear a ✦ so a harder level reads as an intentional challenge.
-  el.levelName.textContent = `${level.spike ? '✦ ' : ''}${id}. ${level.name}`
+  el.levelName.textContent = `${level.spike ? '✦ ' : ''}${id}. ${nameFor(id, level.name)}`
   el.levelName.classList.toggle('spike', !!level.spike)
   updatePullCount()
   hideAllOverlays()
@@ -179,6 +182,20 @@ function hideAllOverlays(): void {
   el.lose.classList.add('hidden')
   el.menu.classList.add('hidden')
   el.shop.classList.add('hidden')
+  el.daily.classList.add('hidden')
+}
+
+/** Grant today's daily ✦ (once per calendar day) and show the little card. */
+function offerDaily(): void {
+  const t = today()
+  const gap = progress.lastDaily ? daysBetween(progress.lastDaily, t) : Number.NaN
+  const got = claimDaily(progress, t, gap, dailyReward)
+  if (!got) return // already claimed today
+  progress = got.progress
+  el.dailySub.textContent = streakLabel(got.streak)
+  el.dailyAmount.textContent = `✦ +${got.amount}`
+  el.daily.classList.remove('hidden')
+  audio.sfxStar(1)
 }
 
 // ── main loop (fixed timestep) ────────────────────────────────
@@ -624,7 +641,9 @@ $('title-play').addEventListener('click', () => {
   // first user gesture — nudge the audio context awake + start the cozy bed
   audio.sfxPull()
   audio.ambientStart()
+  window.setTimeout(offerDaily, 450) // after the title fades, before they play
 })
+$('daily-ok').addEventListener('click', () => el.daily.classList.add('hidden'))
 
 // ── boot ──────────────────────────────────────────────────────
 loadLevel(Math.min(progress.unlocked, LEVEL_COUNT))
