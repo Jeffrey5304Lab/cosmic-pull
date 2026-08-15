@@ -435,6 +435,43 @@ body {
   background: #fff8ec;
   font-size: 17px;
 }
+/* daily stardust card */
+.daily-mark {
+  font-size: 54px;
+  color: var(--gold);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+#daily .reward {
+  font-size: 30px;
+  margin: 4px 0 14px;
+}
+
+/* rewarded-ad calls to action — offered, never forced */
+.double-btn {
+  margin: 2px 0 6px;
+  font-size: 16px;
+  padding: 7px 16px;
+  border-color: var(--gold-deep);
+  color: var(--gold-deep);
+}
+.privacy-btn {
+  display: block;
+  margin: 8px auto 0;
+  font-size: 14px;
+  padding: 7px 14px;
+  color: var(--ink-soft);
+}
+.hint-ad {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 14px;
+  background: #fff8ec;
+  font-size: 15px;
+  padding: 9px 16px;
+  z-index: 4;
+}
 .more-games {
   display: inline-block;
   margin: 4px 0 14px;
@@ -520,7 +557,9 @@ body {
   .card,
   .stars span.pop,
   .icon-btn.nudge,
-  .title-motif .tw {
+  .title-motif .tw,
+  .reward.pop,
+  .theme-swatch.deny {
     animation: none !important;
   }
   .btn,

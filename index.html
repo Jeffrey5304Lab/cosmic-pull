@@ -36,27 +36,28 @@
           <path d="M36 112 L36 142 L76 142 L76 112" fill="none" stroke="#2B2620" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" />
         </svg>
         <h1 class="game-logo">Cosmic <span class="accent">Pull</span></h1>
-        <p class="tagline">Pull the pins · pour the stars ✦</p>
-        <button id="title-play" class="btn primary big-btn">Play</button>
+        <p class="tagline" data-i18n="tagline">Pull the pins · pour the stars ✦</p>
+        <button id="title-play" class="btn primary big-btn" data-i18n="play">Play</button>
       </div>
     </div>
 
     <div id="app">
       <header class="hud">
-        <button id="btn-menu" class="icon-btn" aria-label="Levels">☰</button>
+        <button id="btn-menu" class="icon-btn" aria-label="Levels" data-i18n-aria="aria_levels">☰</button>
         <!-- Restart lives on the left, away from Sound: side by side they were
              an easy misfire that wipes your run. -->
-        <button id="btn-restart" class="icon-btn" aria-label="Restart level">↻</button>
+        <button id="btn-restart" class="icon-btn" aria-label="Restart level" data-i18n-aria="aria_restart">↻</button>
         <div class="hud-center">
           <span id="level-name" class="level-name">Cosmic Pull</span>
           <span id="pull-count" class="pull-count"></span>
         </div>
-        <button id="btn-sound" class="icon-btn" aria-label="Sound">♪</button>
+        <button id="btn-sound" class="icon-btn" aria-label="Sound" data-i18n-aria="aria_sound">♪</button>
       </header>
 
       <div id="stage" class="stage">
         <canvas id="game"></canvas>
         <div id="hint" class="hint hidden"></div>
+        <button id="hint-ad" class="btn ghost hint-ad hidden" data-i18n="hint_ad">Stuck? Watch an ad for a hint</button>
 
         <!-- Level complete -->
         <div id="win" class="overlay hidden">
@@ -64,22 +65,23 @@
             <div id="win-stars" class="stars">★ ★ ★</div>
             <h2 id="win-title">Nice pull!</h2>
             <div id="win-reward" class="reward"></div>
+            <button id="win-double" class="btn ghost hidden double-btn" data-i18n="double_reward">Watch ad · ✦ ×2</button>
             <div class="card-actions">
-              <button id="win-replay" class="btn ghost">Replay</button>
-              <button id="win-next" class="btn primary">Next ›</button>
+              <button id="win-replay" class="btn ghost" data-i18n="replay">Replay</button>
+              <button id="win-next" class="btn primary" data-i18n="next">Next ›</button>
             </div>
-            <button id="win-share" class="btn ghost share-btn">Share ✦</button>
+            <button id="win-share" class="btn ghost share-btn" data-i18n="share">Share ✦</button>
           </div>
         </div>
 
         <!-- Failed -->
         <div id="lose" class="overlay hidden">
           <div class="card">
-            <h2>So close!</h2>
-            <p class="sub">Some stardust slipped away — give it another pour.</p>
+            <h2 data-i18n="lose_title">So close!</h2>
+            <p class="sub" data-i18n="lose_sub">Some stardust slipped away — give it another pour.</p>
             <div class="card-actions">
-              <button id="lose-menu" class="btn ghost">Levels</button>
-              <button id="lose-retry" class="btn primary">Try again</button>
+              <button id="lose-menu" class="btn ghost" data-i18n="levels">Levels</button>
+              <button id="lose-retry" class="btn primary" data-i18n="retry">Try again</button>
             </div>
           </div>
         </div>
@@ -90,21 +92,34 @@
             <h2 class="menu-title">Cosmic <span class="accent">Pull</span></h2>
             <p id="menu-sub" class="sub"></p>
             <div id="level-grid" class="level-grid"></div>
-            <a id="more-games" class="more-games" href="https://jeffrey5304lab.github.io/cosmic-merge/" target="_blank" rel="noopener">✦ More: Cosmic Merge</a>
+            <a id="more-games" class="more-games" href="https://jeffrey5304lab.github.io/cosmic-merge/" target="_blank" rel="noopener" data-i18n="more_games">✦ More: Cosmic Merge</a>
             <div class="card-actions">
-              <button id="btn-shop" class="btn ghost">✦ Styles</button>
-              <button id="menu-close" class="btn ghost">Close</button>
+              <button id="btn-shop" class="btn ghost" data-i18n="styles">✦ Styles</button>
+              <button id="menu-close" class="btn ghost" data-i18n="close">Close</button>
             </div>
+          </div>
+        </div>
+
+        <!-- Daily stardust (return reason) -->
+        <div id="daily" class="overlay hidden">
+          <div class="card">
+            <div class="daily-mark">✦</div>
+            <h2 data-i18n="daily_title">Daily stardust</h2>
+            <p id="daily-sub" class="sub"></p>
+            <div id="daily-amount" class="reward"></div>
+            <button id="daily-ok" class="btn primary" data-i18n="daily_collect">Collect</button>
           </div>
         </div>
 
         <!-- Sky-theme shop (✦ currency sink) -->
         <div id="shop" class="overlay hidden">
           <div class="card wide">
-            <h2 class="menu-title">✦ <span class="accent">Sky Styles</span></h2>
+            <h2 class="menu-title">✦ <span class="accent" data-i18n="sky_styles">Sky Styles</span></h2>
             <p id="shop-sub" class="sub"></p>
             <div id="shop-grid" class="shop-grid"></div>
-            <button id="shop-close" class="btn ghost">Back</button>
+            <button id="shop-ad" class="btn ghost hidden" data-i18n="watch_ad">Watch ad for ✦ 20</button>
+            <button id="shop-privacy" class="btn ghost hidden privacy-btn" data-i18n="privacy_options">Ad privacy options</button>
+            <button id="shop-close" class="btn ghost" data-i18n="back">Back</button>
           </div>
         </div>
       </div>

@@ -784,6 +784,282 @@ export const LEVELS: LevelDef[] = [
       { pin: 'rshelf', atMs: 8200 },
     ],
   },
+
+  // ── Chapter 4 "Voyage" (26–36) — longer routes across the whole board. ──
+  // Authored against the measured harness (real GameSim): every level's solution
+  // is verified winnable, every declared trap verified to actually lose the
+  // level, and each ✦ spike verified to defeat the rote rule. Cadence: flow
+  // levels with spikes at 29 / 33 / 36.
+
+  {
+    id: 26,
+    name: 'Long Fall',
+    world: W,
+    hint: '一路掉到底——斜橋把星塵接住送到對面，別拔它',
+    pins: [
+      { id: 'hold', x: 74, y: 34, len: 20, thick: 3 },
+      { id: 'catch', x: 58, y: 78, len: 44, thick: 4, angle: -0.55 },
+    ],
+    walls: [],
+    emitters: [{ x: 74, y: 22, w: 18, h: 12, count: 24 }],
+    cups: [{ id: 'c', x: 20, y: 126, w: 24, h: 20, need: 12 }],
+    hazards: [{ x: 70, y: 128, w: 40, h: 10, kind: 'lava' }],
+    stars: { pulls: [1, 1] },
+    solution: [{ pin: 'hold', atMs: 200 }],
+    traps: ['catch'],
+  },
+
+  {
+    id: 27,
+    name: 'Double Span',
+    world: W,
+    hint: '兩段橋接力，一路送到右下角——兩座都動不得',
+    pins: [
+      { id: 'hold', x: 24, y: 40, len: 20, thick: 3 },
+      { id: 'span1', x: 40, y: 64, len: 40, thick: 4, angle: 0.5 },
+      { id: 'span2', x: 66, y: 96, len: 40, thick: 4, angle: 0.5 },
+    ],
+    walls: [],
+    emitters: [{ x: 24, y: 26, w: 18, h: 14, count: 36 }],
+    cups: [{ id: 'c', x: 86, y: 124, w: 22, h: 20, need: 12 }],
+    hazards: [{ x: 40, y: 126, w: 40, h: 10, kind: 'lava' }],
+    stars: { pulls: [1, 1] },
+    solution: [{ pin: 'hold', atMs: 200 }],
+    traps: ['span1', 'span2'],
+  },
+
+  {
+    id: 28,
+    name: 'Stepping Stones',
+    world: W,
+    hint: '之字形一路往下——每塊踏石都是路的一部分',
+    pins: [
+      { id: 'hold', x: 22, y: 32, len: 18, thick: 3 },
+      { id: 'st1', x: 36, y: 58, len: 32, thick: 4, angle: 0.5 },
+      { id: 'st2', x: 62, y: 84, len: 32, thick: 4, angle: -0.5 },
+      { id: 'st3', x: 38, y: 108, len: 32, thick: 4, angle: 0.5 },
+    ],
+    walls: [],
+    emitters: [{ x: 22, y: 22, w: 16, h: 10, count: 32 }],
+    cups: [{ id: 'c', x: 66, y: 132, w: 24, h: 16, need: 12 }],
+    hazards: [{ x: 16, y: 132, w: 24, h: 9, kind: 'void' }],
+    stars: { pulls: [1, 1] },
+    solution: [{ pin: 'hold', atMs: 200 }],
+    traps: ['st1', 'st3'],
+  },
+
+  {
+    id: 29,
+    name: 'Twin Cascade',
+    world: W,
+    spike: true,
+    hint: '兩層架子疊在岩漿之間——先放下面那層，順序反了就溢出去',
+    pins: [
+      { id: 'top', x: 50, y: 34, len: 24, thick: 3 },
+      { id: 'low', x: 50, y: 70, len: 24, thick: 3 },
+    ],
+    walls: [],
+    emitters: [
+      { x: 50, y: 24, w: 20, h: 9, count: 10 },
+      { x: 50, y: 60, w: 20, h: 9, count: 10 },
+    ],
+    cups: [{ id: 'c', x: 50, y: 128, w: 24, h: 18, need: 17 }],
+    hazards: [
+      { x: 16, y: 104, w: 22, h: 8, kind: 'lava' },
+      { x: 84, y: 104, w: 22, h: 8, kind: 'lava' },
+    ],
+    stars: { pulls: [2, 3] },
+    solution: [
+      { pin: 'low', atMs: 200 },
+      { pin: 'top', atMs: 2800 },
+    ],
+  },
+
+  {
+    id: 30,
+    name: 'Mirror Spans',
+    world: W,
+    hint: '左右兩堆各走各的橋，在中間會合',
+    pins: [
+      { id: 'holdL', x: 20, y: 34, len: 18, thick: 3 },
+      { id: 'holdR', x: 80, y: 34, len: 18, thick: 3 },
+      { id: 'spanL', x: 32, y: 68, len: 38, thick: 4, angle: 0.55 },
+      { id: 'spanR', x: 68, y: 92, len: 38, thick: 4, angle: -0.55 },
+    ],
+    walls: [],
+    emitters: [
+      { x: 20, y: 24, w: 16, h: 10, count: 20 },
+      { x: 80, y: 24, w: 16, h: 10, count: 20 },
+    ],
+    cups: [{ id: 'c', x: 50, y: 128, w: 26, h: 18, need: 18 }],
+    hazards: [
+      { x: 14, y: 126, w: 22, h: 9, kind: 'lava' },
+      { x: 86, y: 126, w: 22, h: 9, kind: 'lava' },
+    ],
+    stars: { pulls: [2, 2] },
+    solution: [
+      { pin: 'holdL', atMs: 200 },
+      { pin: 'holdR', atMs: 1400 },
+    ],
+    traps: ['spanL', 'spanR'],
+  },
+
+  {
+    id: 31,
+    name: 'Slow Sweep',
+    world: W,
+    hint: '底下的岩漿慢慢來回——長橋是唯一的路',
+    pins: [
+      { id: 'hold', x: 28, y: 38, len: 20, thick: 3 },
+      { id: 'span', x: 46, y: 76, len: 46, thick: 4, angle: 0.55 },
+    ],
+    walls: [],
+    emitters: [{ x: 28, y: 26, w: 18, h: 12, count: 36 }],
+    cups: [{ id: 'c', x: 74, y: 124, w: 24, h: 20, need: 12 }],
+    hazards: [{ x: 38, y: 118, w: 26, h: 9, kind: 'lava', moveX: 1.1, moveRange: 12 }],
+    stars: { pulls: [1, 1] },
+    solution: [{ pin: 'hold', atMs: 200 }],
+    traps: ['span'],
+  },
+
+  {
+    id: 32,
+    name: 'Two Rivers',
+    world: W,
+    hint: '兩條顏色各自向外分流，中間是黑洞——兩座橋都別碰',
+    pins: [
+      { id: 'holdG', x: 26, y: 36, len: 18, thick: 3 },
+      { id: 'holdR', x: 74, y: 36, len: 18, thick: 3 },
+      { id: 'spanG', x: 34, y: 72, len: 34, thick: 4, angle: -0.5 },
+      { id: 'spanR', x: 66, y: 72, len: 34, thick: 4, angle: 0.5 },
+    ],
+    walls: [],
+    emitters: [
+      { x: 26, y: 24, w: 16, h: 12, count: 18, color: 'gold' },
+      { x: 74, y: 24, w: 16, h: 12, count: 18, color: 'rose' },
+    ],
+    cups: [
+      { id: 'cg', x: 12, y: 126, w: 20, h: 20, need: 9, color: 'gold' },
+      { id: 'cr', x: 88, y: 126, w: 20, h: 20, need: 9, color: 'rose' },
+    ],
+    hazards: [{ x: 50, y: 126, w: 30, h: 10, kind: 'void' }],
+    stars: { pulls: [2, 2] },
+    solution: [
+      { pin: 'holdG', atMs: 200 },
+      { pin: 'holdR', atMs: 1200 },
+    ],
+    traps: ['spanG', 'spanR'],
+  },
+
+  {
+    id: 33,
+    name: 'Side Key',
+    world: W,
+    spike: true,
+    hint: '右邊被閘門擋著——先把左邊那個小鑰匙杯填滿，門才會開',
+    pins: [
+      { id: 'key', x: 24, y: 40, len: 18, thick: 3 },
+      { id: 'main', x: 68, y: 40, len: 22, thick: 3 },
+      { id: 'span', x: 70, y: 78, len: 34, thick: 4, angle: 0.5 },
+    ],
+    walls: [{ x: 84, y: 100, w: 26, h: 4, gate: 'ck' }],
+    emitters: [
+      { x: 24, y: 28, w: 16, h: 12, count: 16 },
+      { x: 68, y: 28, w: 18, h: 12, count: 28 },
+    ],
+    cups: [
+      { id: 'ck', x: 16, y: 122, w: 20, h: 18, need: 8 },
+      { id: 'cm', x: 84, y: 128, w: 22, h: 16, need: 12 },
+    ],
+    hazards: [{ x: 50, y: 128, w: 26, h: 9, kind: 'lava' }],
+    stars: { pulls: [2, 3] },
+    solution: [
+      { pin: 'key', atMs: 200 },
+      { pin: 'main', atMs: 3000 },
+    ],
+    traps: ['span'],
+  },
+
+  {
+    id: 34,
+    name: 'Crossfire',
+    world: W,
+    hint: '兩道危險交錯掃過，長橋撐住整條路',
+    pins: [
+      { id: 'hold', x: 26, y: 34, len: 20, thick: 3 },
+      { id: 'span', x: 48, y: 74, len: 48, thick: 4, angle: 0.5 },
+    ],
+    walls: [],
+    emitters: [{ x: 26, y: 22, w: 18, h: 12, count: 46 }],
+    cups: [{ id: 'c', x: 76, y: 126, w: 24, h: 18, need: 12 }],
+    hazards: [
+      { x: 34, y: 104, w: 22, h: 8, kind: 'lava', moveX: 1.3, moveRange: 10 },
+      { x: 40, y: 128, w: 22, h: 8, kind: 'void', moveX: 0.9, moveRange: 12 },
+    ],
+    stars: { pulls: [1, 1] },
+    solution: [{ pin: 'hold', atMs: 200 }],
+    traps: ['span'],
+  },
+
+  {
+    id: 35,
+    name: 'Unzip',
+    world: W,
+    hint: '拔最上面那根會連鎖鬆開中層——先把最底下那堆放下去墊好',
+    pins: [
+      { id: 'trigger', x: 50, y: 30, len: 22, thick: 3, releases: ['mid'] },
+      { id: 'mid', x: 34, y: 62, len: 22, thick: 3 },
+      { id: 'base', x: 66, y: 92, len: 22, thick: 3 },
+    ],
+    walls: [],
+    emitters: [
+      { x: 50, y: 20, w: 18, h: 9, count: 16 },
+      { x: 34, y: 52, w: 18, h: 9, count: 16 },
+      { x: 66, y: 82, w: 18, h: 9, count: 16 },
+    ],
+    cups: [{ id: 'c', x: 50, y: 132, w: 26, h: 16, need: 24 }],
+    hazards: [
+      { x: 12, y: 116, w: 20, h: 8, kind: 'lava' },
+      { x: 88, y: 116, w: 20, h: 8, kind: 'lava' },
+    ],
+    stars: { pulls: [2, 3] },
+    solution: [
+      { pin: 'base', atMs: 200 },
+      { pin: 'trigger', atMs: 3200 },
+    ],
+  },
+
+  {
+    id: 36,
+    name: 'Deep Cascade',
+    world: W,
+    spike: true,
+    hint: '三層疊在岩漿走廊上——由下往上拔，一步都不能顛倒',
+    pins: [
+      { id: 's1', x: 50, y: 28, len: 22, thick: 3 },
+      { id: 's2', x: 50, y: 56, len: 22, thick: 3 },
+      { id: 's3', x: 50, y: 84, len: 22, thick: 3 },
+    ],
+    walls: [],
+    emitters: [
+      { x: 50, y: 19, w: 18, h: 8, count: 9 },
+      { x: 50, y: 47, w: 18, h: 8, count: 9 },
+      { x: 50, y: 75, w: 18, h: 8, count: 9 },
+    ],
+    cups: [{ id: 'c', x: 50, y: 130, w: 24, h: 16, need: 23 }],
+    hazards: [
+      { x: 15, y: 106, w: 22, h: 8, kind: 'lava' },
+      { x: 85, y: 106, w: 22, h: 8, kind: 'lava' },
+      { x: 15, y: 132, w: 18, h: 8, kind: 'lava' },
+      { x: 85, y: 132, w: 18, h: 8, kind: 'lava' },
+    ],
+    stars: { pulls: [3, 4] },
+    solution: [
+      { pin: 's3', atMs: 200 },
+      { pin: 's2', atMs: 2800 },
+      { pin: 's1', atMs: 5600 },
+    ],
+  },
 ]
 
 export const LEVEL_COUNT = LEVELS.length

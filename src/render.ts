@@ -22,9 +22,34 @@ export class Renderer {
   private planet = { x: 74, y: 30, r: 14 }
   /** active sky theme — recolours ONLY the background (never gameplay bodies). */
   private theme: SkyTheme = THEMES[0]
+  /** OS "reduce motion": hold decorative animation still (a11y — reviewers check). */
+  private calm = false
 
   setTheme(id: string): void {
     this.theme = themeById(id)
+  }
+  setReduceMotion(on: boolean): void {
+    this.calm = on
+  }
+
+  /** Cached radial-glow sprite per stardust colour (see drawGrain). */
+  private glowCache = new Map<string, HTMLCanvasElement>()
+  private glowSprite(hex: string): HTMLCanvasElement {
+    const hit = this.glowCache.get(hex)
+    if (hit) return hit
+    const S = 64 // plenty of resolution; drawn scaled-down to a few world units
+    const c = document.createElement('canvas')
+    c.width = S
+    c.height = S
+    const g = c.getContext('2d')!
+    const grd = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2)
+    grd.addColorStop(0, hex)
+    grd.addColorStop(0.5, hex)
+    grd.addColorStop(1, 'rgba(0,0,0,0)')
+    g.fillStyle = grd
+    g.fillRect(0, 0, S, S)
+    this.glowCache.set(hex, c)
+    return c
   }
 
   constructor(private ctx: CanvasRenderingContext2D) {
@@ -229,11 +254,12 @@ export class Renderer {
     ctx.globalAlpha = 1
 
     // slow-drifting dust motes (additive glow) — dust floating in a sunbeam, so
-    // the big empty mid-board breathes instead of reading as a blank half-page
+    // the big empty mid-board breathes instead of reading as a blank half-page.
+    // Under reduce-motion they hold still (still decorative, just not moving).
     ctx.save()
     ctx.globalCompositeOperation = 'lighter'
     for (const m of this.motes) {
-      const t = timeMs / 1000
+      const t = this.calm ? 0 : timeMs / 1000
       const y = ((m.y - t * m.sp) % (WORLD.h + 8) + WORLD.h + 8) % (WORLD.h + 8) - 4
       const x = m.x + Math.sin(t * 0.25 + m.ph) * 3
       const grd = ctx.createRadialGradient(x, y, 0, x, y, m.r * 3)
@@ -426,15 +452,12 @@ export class Renderer {
     // soft glow halo (additive). Kept modest in alpha + radius so a DENSE resting
     // pile (many overlapping halos) doesn't sum to a blown-out white block —
     // individual grains must stay legible; only sparse/flowing dust really blooms.
-    const grd = ctx.createRadialGradient(x, y, 0, x, y, r * 2.05 * glow)
-    grd.addColorStop(0, hex)
-    grd.addColorStop(0.5, hex)
-    grd.addColorStop(1, 'rgba(0,0,0,0)')
+    // Drawn from a cached sprite: building a radial gradient per grain per frame
+    // was the renderer's hot path on low-end phones (~46 grains × 60fps).
+    const rad = r * 2.05 * glow
+    const sprite = this.glowSprite(hex)
     ctx.globalAlpha = 0.28
-    ctx.fillStyle = grd
-    ctx.beginPath()
-    ctx.arc(x, y, r * 2.05 * glow, 0, Math.PI * 2)
-    ctx.fill()
+    ctx.drawImage(sprite, x - rad, y - rad, rad * 2, rad * 2)
     ctx.restore()
     ctx.globalAlpha = 1
 

@@ -4,11 +4,16 @@ import { GameSim } from './sim.ts'
 import { Renderer } from './render.ts'
 import { Particles } from './particles.ts'
 import { LEVELS, LEVEL_COUNT, getLevel } from './levels.ts'
-import { computeStars, earnedStardust } from './logic.ts'
-import { addStardust, loadProgress, pickTheme, recordWin, saveProgress, totalStars, type Progress } from './storage.ts'
+import { computeStars, dailyReward, daysBetween, earnedStardust, today } from './logic.ts'
+import { addStardust, claimDaily, loadProgress, pickTheme, recordWin, saveProgress, totalStars, type Progress } from './storage.ts'
 import { shareResult } from './sharecard.ts'
+import { applyI18n, hintFor, nameFor, pullsLabel, streakLabel, t } from './i18n.ts'
+import { AD_REWARD, adsAvailable, initAds, privacyOptionsAvailable, showPrivacyOptions, showRewarded } from './ads.ts'
 import * as audio from './audio.ts'
 import * as haptics from './haptics.ts'
+
+applyI18n() // localise all static [data-i18n] markup before first paint
+void initAds() // best-effort AdMob init (native only; no-op on web)
 
 // ── DOM refs ──────────────────────────────────────────────────
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T
@@ -29,6 +34,9 @@ const el = {
   menu: $('menu'),
   menuSub: $('menu-sub'),
   levelGrid: $('level-grid'),
+  daily: $('daily'),
+  dailySub: $('daily-sub'),
+  dailyAmount: $('daily-amount'),
   shop: $('shop'),
   shopSub: $('shop-sub'),
   shopGrid: $('shop-grid'),
@@ -49,6 +57,7 @@ let dripCooldown = 0
 let shake = 0 // screenshake magnitude (world units), decays each frame
 let flash = 0 // golden full-screen flash (0–1), decays each frame
 let stuckShown = false // gentle "no flow left" cue already surfaced this attempt
+let hintPin: string | null = null // solution pin revealed by a rewarded "hint" ad
 let winPending = 0 // ms since the win was locked in; lets the pour finish first
 let winAt = 0 // performance.now() when the win locked in; drives the constellation reveal
 const fullCups = new Set<string>() // cups that have already popped their "filled" burst
@@ -58,13 +67,14 @@ let floaterCd = 0 // throttle for the "+N ✦" currency pops
 const floaters: { x: number; y: number; vy: number; life: number; max: number; n: number }[] = []
 // Respect the OS "reduce motion" setting: skip screenshake + the golden flash.
 const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+renderer.setReduceMotion(reduceMotion) // calm the decorative canvas animation too
 
 audio.setMuted(progress.muted)
 updateSoundBtn()
 
 /** Which chapter a level belongs to (1 Pour / 2 Route / 3 Machine). */
 function chapterOf(id: number): number {
-  return id <= 8 ? 1 : id <= 16 ? 2 : 3
+  return id <= 8 ? 1 : id <= 16 ? 2 : id <= 25 ? 3 : 4
 }
 /**
  * The sky the board should wear. If the player has bought & chosen a theme,
@@ -75,7 +85,7 @@ function chapterOf(id: number): number {
 function effectiveThemeId(levelId: number): string {
   if (progress.theme !== 'parchment') return progress.theme
   const ch = chapterOf(levelId)
-  return ch === 3 ? 'dusk' : ch === 2 ? 'dawn' : 'parchment'
+  return ch === 4 ? 'deep' : ch === 3 ? 'dusk' : ch === 2 ? 'dawn' : 'parchment'
 }
 function applyTheme(): void {
   renderer.setTheme(effectiveThemeId(currentId))
@@ -96,6 +106,8 @@ function loadLevel(id: number): void {
   shake = 0
   flash = 0
   stuckShown = false
+  hintPin = null
+  $('hint-ad').classList.add('hidden')
   winPending = 0
   winAt = 0
   fullCups.clear()
@@ -106,19 +118,18 @@ function loadLevel(id: number): void {
   hoverPin = null
   el.btnRestart.classList.remove('nudge')
   // Spike levels wear a ✦ so a harder level reads as an intentional challenge.
-  el.levelName.textContent = `${level.spike ? '✦ ' : ''}${id}. ${level.name}`
+  el.levelName.textContent = `${level.spike ? '✦ ' : ''}${id}. ${nameFor(id, level.name)}`
   el.levelName.classList.toggle('spike', !!level.spike)
   updatePullCount()
   hideAllOverlays()
-  showHint(level.hint)
+  showHint(hintFor(level.id, level.hint))
 }
 
 function updatePullCount(): void {
   // Show the 3★ pull budget, not just a bare count — otherwise the rating feels
   // arbitrary and there's nothing to play against.
   const par = sim.level.stars?.pulls?.[0] ?? sim.level.solution?.length ?? sim.level.pins.length
-  const label = sim.pulls === 1 ? '1 pull' : `${sim.pulls} pulls`
-  el.pullCount.textContent = `${label} · ★★★ ≤ ${par}`
+  el.pullCount.textContent = `${pullsLabel(sim.pulls)} · ★★★ ≤ ${par}`
   el.pullCount.classList.toggle('over-par', sim.pulls > par)
 }
 
@@ -141,16 +152,29 @@ function showHint(text?: string): void {
  *  player. Surface a persistent, friendly toast and pulse the restart button. */
 function showStuck(): void {
   window.clearTimeout(hintTimer)
-  el.hint.textContent = '星塵流不動了 — 點 ↻ 再試一次'
+  el.hint.textContent = t('stuck')
   el.hint.classList.remove('hidden')
   el.hint.style.opacity = '1'
   el.btnRestart.classList.add('nudge')
+  // A genuinely useful ad moment: the player is stuck and wants help (the
+  // industry's best-performing rewarded placement is exactly this).
+  if (adsAvailable() && !hintPin) $('hint-ad').classList.remove('hidden')
 }
 
 function clearStuck(): void {
   el.btnRestart.classList.remove('nudge')
   if (stuckShown) showHint(undefined)
   stuckShown = false
+  $('hint-ad').classList.add('hidden')
+}
+
+/** The next pin in the level's intended solution that hasn't been pulled yet. */
+function nextSolutionPin(): string | null {
+  const sol = sim.level.solution
+  if (!sol) return null
+  const live = new Set(sim.pinViews.map((p) => p.id))
+  for (const s of [...sol].sort((a, b) => a.atMs - b.atMs)) if (live.has(s.pin)) return s.pin
+  return null
 }
 
 function hideAllOverlays(): void {
@@ -158,6 +182,20 @@ function hideAllOverlays(): void {
   el.lose.classList.add('hidden')
   el.menu.classList.add('hidden')
   el.shop.classList.add('hidden')
+  el.daily.classList.add('hidden')
+}
+
+/** Grant today's daily ✦ (once per calendar day) and show the little card. */
+function offerDaily(): void {
+  const t = today()
+  const gap = progress.lastDaily ? daysBetween(progress.lastDaily, t) : Number.NaN
+  const got = claimDaily(progress, t, gap, dailyReward)
+  if (!got) return // already claimed today
+  progress = got.progress
+  el.dailySub.textContent = streakLabel(got.streak)
+  el.dailyAmount.textContent = `✦ +${got.amount}`
+  el.daily.classList.remove('hidden')
+  audio.sfxStar(1)
 }
 
 // ── main loop (fixed timestep) ────────────────────────────────
@@ -240,10 +278,10 @@ function frame(now: number): void {
     }
   }
 
-  // drive the floating reward pops
+  // drive the floating reward pops (they hold still under reduce-motion)
   for (const f of floaters) {
     f.life += dt / 1000
-    f.y += (f.vy * dt) / 1000
+    if (!reduceMotion) f.y += (f.vy * dt) / 1000
   }
   for (let i = floaters.length - 1; i >= 0; i--) if (floaters[i].life >= floaters[i].max) floaters.splice(i, 1)
 
@@ -276,7 +314,7 @@ function frame(now: number): void {
     t.oy += (Math.random() - 0.5) * shake * t.scale
   }
   // gentle onboarding: point at the pin on level 1 until the first pull
-  const coach = currentId === 1 && sim.pulls === 0 && !resolved ? (sim.pinViews[0]?.id ?? null) : null
+  const coach = hintPin ?? (currentId === 1 && sim.pulls === 0 && !resolved ? (sim.pinViews[0]?.id ?? null) : null)
   renderer.draw(sim, t, now, resolved ? null : hoverPin, coach, winProgress)
   // particles + reward floaters share the world transform, drawn on top
   ctx.save()
@@ -374,15 +412,20 @@ let lastReward = 0
 function showWin(stars: number, reward = 0): void {
   lastStars = stars
   el.winStars.innerHTML = [1, 2, 3].map((i) => `<span class="${i <= stars ? '' : 'dim'}">★</span>`).join(' ')
-  el.winTitle.textContent =
-    stars === 3 ? 'Perfect pour!' : stars === 2 ? 'Nicely done!' : 'Cleared!'
+  el.winTitle.textContent = stars === 3 ? t('win_perfect') : stars === 2 ? t('win_nice') : t('win_cleared')
   // ✦ reward line: how much stardust this pour banked, plus the running purse.
   el.winReward.textContent = reward > 0 ? `✦ +${reward}   ·   ✦ ${progress.stardust}` : `✦ ${progress.stardust}`
   el.winReward.classList.remove('pop')
   void el.winReward.offsetWidth // restart the pop animation
   el.winReward.classList.add('pop')
+  // Rewarded ad at the moment of success — the highest-intent, least-intrusive
+  // placement for a cozy game (we rarely fail, so a "continue" ad wouldn't fire).
+  const dbl = $<HTMLButtonElement>('win-double')
+  dbl.classList.toggle('hidden', !(adsAvailable() && reward > 0))
+  dbl.disabled = false
+  dbl.textContent = t('double_reward')
   const isLast = currentId >= LEVEL_COUNT
-  ;($('win-next') as HTMLButtonElement).textContent = isLast ? 'Menu' : 'Next ›'
+  ;($('win-next') as HTMLButtonElement).textContent = isLast ? t('menu') : t('next')
   el.win.classList.remove('hidden')
   // reveal the stars one at a time with a rising chime — the satisfying beat
   const spans = Array.from(el.winStars.querySelectorAll('span'))
@@ -399,7 +442,8 @@ function showWin(stars: number, reward = 0): void {
 const CHAPTERS = [
   { name: 'Pour', from: 1, to: 8 },
   { name: 'Route', from: 9, to: 16 },
-  { name: 'Machine', from: 17, to: LEVEL_COUNT },
+  { name: 'Machine', from: 17, to: 25 },
+  { name: 'Voyage', from: 26, to: LEVEL_COUNT },
 ] as const
 
 function openMenu(): void {
@@ -414,7 +458,8 @@ function openMenu(): void {
     section.className = 'chapter'
     const title = document.createElement('div')
     title.className = 'chapter-title'
-    title.innerHTML = `<span>✦ ${ch.name}</span><span class="chapter-prog">${got} / ${levels.length * 3}</span>`
+    const chName = t('chapter_' + ch.name.toLowerCase())
+    title.innerHTML = `<span>✦ ${chName}</span><span class="chapter-prog">${got} / ${levels.length * 3}</span>`
     const grid = document.createElement('div')
     grid.className = 'chapter-grid'
     for (const lv of levels) {
@@ -441,11 +486,14 @@ function openMenu(): void {
 function openShop(): void {
   hideAllOverlays()
   renderShop()
+  $('shop-ad').classList.toggle('hidden', !adsAvailable()) // only where ads exist
+  // GDPR: let users revisit their consent choice (promised in the privacy policy)
+  $('shop-privacy').classList.toggle('hidden', !privacyOptionsAvailable())
   el.shop.classList.remove('hidden')
 }
 
 function renderShop(): void {
-  el.shopSub.innerHTML = `<span class="dust">✦ ${progress.stardust}</span> to spend`
+  el.shopSub.innerHTML = `<span class="dust">✦ ${progress.stardust}</span> ${t('to_spend')}`
   el.shopGrid.innerHTML = ''
   for (const th of THEMES) {
     const owned = progress.owned.includes(th.id)
@@ -453,11 +501,11 @@ function renderShop(): void {
     const affordable = progress.stardust >= th.cost
     const cell = document.createElement('button')
     cell.className = 'theme-swatch' + (selected ? ' selected' : '') + (!owned && !affordable ? ' cant' : '')
-    const state = selected ? 'Selected' : owned ? 'Select' : `✦ ${th.cost}`
+    const state = selected ? t('selected') : owned ? t('select') : `✦ ${th.cost}`
     cell.innerHTML =
       `<span class="swatch-preview" style="background:linear-gradient(160deg, ${th.bg0}, ${th.bg1})">` +
       `<i style="background:${th.deco}"></i><i style="background:${th.deco}"></i><i style="background:${th.deco}"></i></span>` +
-      `<span class="swatch-name">${th.name}</span>` +
+      `<span class="swatch-name">${t('theme_' + th.id)}</span>` +
       `<span class="swatch-state">${state}</span>`
     cell.addEventListener('click', () => {
       if (selected) return
@@ -513,6 +561,57 @@ $('btn-menu').addEventListener('click', openMenu)
 $('menu-close').addEventListener('click', () => el.menu.classList.add('hidden'))
 $('btn-shop').addEventListener('click', openShop)
 $('shop-close').addEventListener('click', openMenu) // Back → the level map
+$('shop-privacy').addEventListener('click', () => void showPrivacyOptions())
+$('hint-ad').addEventListener('click', () => {
+  const btn = $<HTMLButtonElement>('hint-ad')
+  btn.disabled = true
+  void showRewarded().then((ok) => {
+    btn.disabled = false
+    if (!ok) {
+      btn.textContent = t('ad_unavailable')
+      window.setTimeout(() => (btn.textContent = t('hint_ad')), 1600)
+      return
+    }
+    hintPin = nextSolutionPin() // the coach arrow now points at the right peg
+    btn.classList.add('hidden')
+  })
+})
+$('win-double').addEventListener('click', () => {
+  const btn = $<HTMLButtonElement>('win-double')
+  btn.disabled = true
+  void showRewarded().then((ok) => {
+    if (!ok) {
+      btn.textContent = t('ad_unavailable')
+      window.setTimeout(() => {
+        btn.textContent = t('double_reward')
+        btn.disabled = false
+      }, 1600)
+      return
+    }
+    progress = addStardust(progress, lastReward) // pay the same amount again = ×2
+    lastReward *= 2
+    el.winReward.textContent = `✦ +${lastReward}   ·   ✦ ${progress.stardust}`
+    el.winReward.classList.remove('pop')
+    void el.winReward.offsetWidth
+    el.winReward.classList.add('pop')
+    btn.classList.add('hidden') // one double per level
+    audio.sfxStar(2)
+  })
+})
+$('shop-ad').addEventListener('click', () => {
+  const btn = $<HTMLButtonElement>('shop-ad')
+  btn.disabled = true
+  void showRewarded().then((ok) => {
+    btn.disabled = false
+    if (ok) {
+      progress = addStardust(progress, AD_REWARD)
+      renderShop()
+    } else {
+      btn.textContent = t('ad_unavailable')
+      window.setTimeout(() => (btn.textContent = t('watch_ad')), 1600)
+    }
+  })
+})
 $('btn-restart').addEventListener('click', () => loadLevel(currentId))
 $('win-replay').addEventListener('click', () => loadLevel(currentId))
 $('win-share').addEventListener('click', () => {
@@ -543,7 +642,9 @@ $('title-play').addEventListener('click', () => {
   // first user gesture — nudge the audio context awake + start the cozy bed
   audio.sfxPull()
   audio.ambientStart()
+  window.setTimeout(offerDaily, 450) // after the title fades, before they play
 })
+$('daily-ok').addEventListener('click', () => el.daily.classList.add('hidden'))
 
 // ── boot ──────────────────────────────────────────────────────
 loadLevel(Math.min(progress.unlocked, LEVEL_COUNT))
