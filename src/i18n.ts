@@ -50,6 +50,7 @@ const EN: Dict = {
   chapter_pour: 'Pour',
   chapter_route: 'Route',
   chapter_machine: 'Machine',
+  chapter_voyage: 'Voyage',
   watch_ad: 'Watch ad for ✦ 20',
   ad_unavailable: 'No ad right now — try later',
   privacy_options: 'Ad privacy options',
@@ -94,6 +95,7 @@ const ZH: Dict = {
   chapter_pour: '傾瀉',
   chapter_route: '導流',
   chapter_machine: '機關',
+  chapter_voyage: '遠航',
   watch_ad: '看廣告換 ✦ 20',
   ad_unavailable: '暫時沒有廣告——晚點再試',
   privacy_options: '廣告隱私設定',
@@ -152,6 +154,17 @@ const HINT_EN: Record<number, string> = {
   23: "Pulling that peg chain-releases the next shelf — again bottom-up, don't let the top crush the bottom",
   24: 'The middle pile locks two gates — fill both key-cups, left and right, to release it',
   25: 'Fill the left cup bottom-up to open the gate, then pull the right peg to drop the whole stack',
+  26: "A long drop — the slanted bridge catches the stardust and carries it across. Don't pull it",
+  27: 'Two bridges in relay, all the way to the far corner — neither can be moved',
+  28: 'Zig-zag all the way down — every stepping stone is part of the path',
+  29: 'Two shelves stacked between lava — release the lower one first, or it spills',
+  30: 'Two piles, each on its own bridge, meeting in the middle',
+  31: 'The lava sweeps slowly below — the long bridge is the only way across',
+  32: "Two colours flow outward past the black hole — don't touch either bridge",
+  33: 'The right side is gated — fill the little key cup on the left to open it',
+  34: 'Two dangers sweep across; the long bridge holds the whole route',
+  35: 'Pulling the top peg chain-releases the middle — drop the bottom pile first to cushion it',
+  36: 'Three shelves over a lava corridor — bottom-up, and not one step out of order',
 }
 
 /** Localised hint for a level (zh uses the inline `hint`; en uses the map). */
@@ -187,6 +200,17 @@ const NAME_ZH: Record<number, string> = {
   23: '連鎖反應',
   24: '雙鎖',
   25: '大機關',
+  26: '長墜',
+  27: '雙橋接力',
+  28: '踏石',
+  29: '雙層瀑',
+  30: '鏡橋',
+  31: '緩掃',
+  32: '兩條河',
+  33: '側門鑰匙',
+  34: '交叉火網',
+  35: '拉鍊',
+  36: '深層瀑',
 }
 
 /** Localised level title (keeps the level list readable in either language). */

@@ -74,7 +74,7 @@ updateSoundBtn()
 
 /** Which chapter a level belongs to (1 Pour / 2 Route / 3 Machine). */
 function chapterOf(id: number): number {
-  return id <= 8 ? 1 : id <= 16 ? 2 : 3
+  return id <= 8 ? 1 : id <= 16 ? 2 : id <= 25 ? 3 : 4
 }
 /**
  * The sky the board should wear. If the player has bought & chosen a theme,
@@ -85,7 +85,7 @@ function chapterOf(id: number): number {
 function effectiveThemeId(levelId: number): string {
   if (progress.theme !== 'parchment') return progress.theme
   const ch = chapterOf(levelId)
-  return ch === 3 ? 'dusk' : ch === 2 ? 'dawn' : 'parchment'
+  return ch === 4 ? 'deep' : ch === 3 ? 'dusk' : ch === 2 ? 'dawn' : 'parchment'
 }
 function applyTheme(): void {
   renderer.setTheme(effectiveThemeId(currentId))
@@ -442,7 +442,8 @@ function showWin(stars: number, reward = 0): void {
 const CHAPTERS = [
   { name: 'Pour', from: 1, to: 8 },
   { name: 'Route', from: 9, to: 16 },
-  { name: 'Machine', from: 17, to: LEVEL_COUNT },
+  { name: 'Machine', from: 17, to: 25 },
+  { name: 'Voyage', from: 26, to: LEVEL_COUNT },
 ] as const
 
 function openMenu(): void {
