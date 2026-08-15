@@ -4,7 +4,7 @@
  * The point: does deterministic sorting FEEL like a puzzle? Rendering is
  * throwaway; sort.ts / solver.ts are the real deliverables.
  */
-import { SortGame } from './sort.ts'
+import { SortGame, canPour } from './sort.ts'
 import { generateLevel, hintMove, starsFor, type GeneratedLevel } from './solver.ts'
 
 const COLORS = ['#F5B942', '#E86A8E', '#4FC6C0', '#8E7CC3', '#7C8B4C', '#E5533B', '#5B7290', '#D98A1F', '#3A2A55']
@@ -71,13 +71,21 @@ function draw(): void {
     const lift = i === selected ? 16 : 0
     const y = pos[i].y - lift
     const complete = b.length === cap && b.every((c) => c === b[0])
+    // when a bottle is picked, show WHERE it can pour (the big clarity fix)
+    const legalTarget = selected >= 0 && selected !== i && canPour(game.bottles, cap, selected, i)
     // glass
-    ctx.fillStyle = 'rgba(255,255,255,0.45)'
-    ctx.strokeStyle = complete ? '#3aa76d' : '#2B2620'
-    ctx.lineWidth = complete ? 4 : 2.5
+    ctx.fillStyle = legalTarget ? 'rgba(90,200,140,0.22)' : 'rgba(255,255,255,0.45)'
+    ctx.strokeStyle = complete ? '#3aa76d' : legalTarget ? '#3aa76d' : i === selected ? '#D98A1F' : '#2B2620'
+    ctx.lineWidth = complete || legalTarget || i === selected ? 4.5 : 2.5
     roundRect(x, y, BW, BH, 12)
     ctx.fill()
     ctx.stroke()
+    if (legalTarget) {
+      ctx.fillStyle = '#3aa76d'
+      ctx.font = 'bold 20px system-ui'
+      ctx.textAlign = 'center'
+      ctx.fillText('↓', x + BW / 2, y - 8)
+    }
     // contents
     b.forEach((c, k) => {
       ctx.fillStyle = COLORS[c % COLORS.length]
