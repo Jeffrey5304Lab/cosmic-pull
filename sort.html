@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Star Sort — P0 原型</title>
+    <style>
+      body { margin: 0; background: #f4e9d7; font-family: system-ui, sans-serif; color: #2b2620;
+             display: flex; flex-direction: column; align-items: center; min-height: 100dvh; }
+      header { display: flex; gap: 14px; align-items: baseline; padding: 10px 0 2px; flex-wrap: wrap; justify-content: center; }
+      #lv { font-size: 20px; font-weight: 700; }
+      #meta, #mv { font-size: 14px; color: #5b5348; }
+      #c { width: min(96vw, 480px); touch-action: manipulation; }
+      .bar { display: flex; gap: 8px; padding: 8px; flex-wrap: wrap; justify-content: center; }
+      button { font-size: 15px; padding: 8px 14px; border-radius: 10px; border: 2px solid #2b2620;
+               background: #fff8ec; cursor: pointer; }
+      button:active { transform: translateY(2px); }
+      #win { display: none; font-size: 18px; font-weight: 700; color: #3aa76d; }
+      #stuckmsg { display: none; font-size: 14px; color: #b3542e; }
+      .note { font-size: 12px; color: #9c8b76; padding: 4px 16px 16px; text-align: center; max-width: 480px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span id="lv"></span><span id="meta"></span><span id="mv"></span>
+      <span id="win">✓ 完成！ <button id="nextwin">下一關 ›</button></span>
+      <span id="stuckmsg">卡住了——undo 或重來</span>
+    </header>
+    <canvas id="c" width="480" height="640"></canvas>
+    <div class="bar">
+      <button id="undo">↶ Undo</button>
+      <button id="restart">↻ 重來</button>
+      <button id="hintbtn">💡 提示</button>
+      <button id="prev">‹ 上一關</button>
+      <button id="next">下一關 ›</button>
+    </div>
+    <p class="note">P0 原型：只驗證「邏輯手感」。美術/音效/動畫都還沒接——那些已經做好，手感對了就接上。
+      每關顯示 solver 證明的最少步數；星等用它計算，不是拍腦袋。</p>
+    <script type="module" src="/src/sortproto.ts"></script>
+  </body>
+</html>
