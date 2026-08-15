@@ -265,17 +265,31 @@ export const LEVELS: LevelDef[] = [
     id: 11,
     name: 'Keystone',
     world: W,
-    hint: '一整堆星塵靠那道長橋撐著——只拔上面的栓',
+    spike: true,
+    // Rebuilt for difficulty: the rote habit (pull flats top-down) releases the
+    // upper flood onto the still-loaded lower shelf and blasts it sideways into
+    // the lava. Drain the lower pile first, then send the flood down the bridge.
+    hint: '上面那堆是洪水——先把下面那堆放走，再開上面的',
     pins: [
-      { id: 'hold', x: 70, y: 42, len: 22, thick: 3 },
-      { id: 'bridge', x: 58, y: 74, len: 44, thick: 4, angle: -0.6 },
+      { id: 'flood', x: 70, y: 20, len: 24, thick: 3 },
+      { id: 'hold', x: 70, y: 50, len: 22, thick: 3 },
+      { id: 'bridge', x: 56, y: 80, len: 44, thick: 4, angle: -0.6 },
     ],
     walls: [],
-    emitters: [{ x: 70, y: 28, w: 18, h: 14, count: 26 }],
-    cups: [{ id: 'c', x: 24, y: 122, w: 22, h: 20, need: 12 }],
-    hazards: [{ x: 72, y: 122, w: 34, h: 10, kind: 'lava' }],
-    stars: { pulls: [1, 1] },
-    solution: [{ pin: 'hold', atMs: 200 }],
+    emitters: [
+      { x: 70, y: 10, w: 20, h: 9, count: 14 },
+      { x: 70, y: 40, w: 18, h: 9, count: 16 },
+    ],
+    cups: [{ id: 'c', x: 22, y: 124, w: 24, h: 20, need: 21 }],
+    hazards: [
+      { x: 78, y: 122, w: 34, h: 10, kind: 'lava' },
+      { x: 46, y: 104, w: 20, h: 8, kind: 'lava' },
+    ],
+    stars: { pulls: [2, 2] },
+    solution: [
+      { pin: 'hold', atMs: 200 },
+      { pin: 'flood', atMs: 3200 },
+    ],
     traps: ['bridge'],
   },
 
@@ -350,27 +364,27 @@ export const LEVELS: LevelDef[] = [
     id: 14,
     name: 'Double Sweep',
     world: W,
-    // Two-stage descent between two drifting voids: cross on the upper span,
-    // rest on the shelf, then drop. Both spans are load-bearing.
-    hint: '兩個黑洞交錯移動。橋撐著去路——分兩段走，看準再放',
+    spike: true,
+    hint: '兩層都載滿了——先放下面那層，順序反了會被埋',
     pins: [
-      { id: 'hold', x: 28, y: 34, len: 22, thick: 3 },
-      { id: 'span', x: 42, y: 64, len: 42, thick: 4, angle: 0.6 },
-      { id: 'shelf', x: 76, y: 96, len: 22, thick: 3 },
+      { id: 'up', x: 38, y: 30, len: 24, thick: 3 },
+      { id: 'down', x: 38, y: 66, len: 24, thick: 3 },
     ],
     walls: [],
-    emitters: [{ x: 28, y: 20, w: 18, h: 14, count: 30 }],
-    cups: [{ id: 'c', x: 76, y: 132, w: 24, h: 16, need: 12 }],
+    emitters: [
+      { x: 38, y: 20, w: 20, h: 9, count: 12 },
+      { x: 38, y: 56, w: 20, h: 9, count: 12 },
+    ],
+    cups: [{ id: 'c', x: 38, y: 130, w: 24, h: 16, need: 18 }],
     hazards: [
-      { x: 34, y: 96, w: 14, h: 7, kind: 'void', moveX: 1.7, moveRange: 14 },
-      { x: 50, y: 124, w: 16, h: 8, kind: 'void', moveX: 2.1, moveRange: 14 },
+      { x: 8, y: 104, w: 22, h: 8, kind: 'void' },
+      { x: 70, y: 104, w: 26, h: 8, kind: 'void' },
     ],
-    stars: { pulls: [2, 2] },
+    stars: { pulls: [2, 3] },
     solution: [
-      { pin: 'hold', atMs: 200 },
-      { pin: 'shelf', atMs: 3400 },
+      { pin: 'down', atMs: 200 },
+      { pin: 'up', atMs: 3000 },
     ],
-    traps: ['span'],
   },
 
   // 15 ── ordered release: clear the shelf before opening the flood.
@@ -378,32 +392,30 @@ export const LEVELS: LevelDef[] = [
     id: 15,
     name: 'Clear the Shelf',
     world: W,
-    // CHAIN: pulling 'gate' also knocks out 'catch' a beat later, so one pull
-    // starts a cascade the player has to have set up correctly first.
-    // (The chutes stay scenery: with the cup directly below they aren't
-    // load-bearing, so making them pullable would be a fake choice.)
-    hint: '拔中間那根會連鎖鬆開下面的接盤——先把上面的放下來墊好',
+    spike: true,
+    hint: '三層架子——由下往上，一層一層清',
     pins: [
-      { id: 'top', x: 50, y: 28, len: 24, thick: 3 },
-      { id: 'gate', x: 50, y: 58, len: 24, thick: 3, releases: ['catch'] },
-      { id: 'catch', x: 50, y: 78, len: 26, thick: 3 },
+      { id: 's1', x: 62, y: 26, len: 22, thick: 3 },
+      { id: 's2', x: 62, y: 58, len: 22, thick: 3 },
+      { id: 's3', x: 62, y: 90, len: 22, thick: 3 },
     ],
-    walls: [
-      { x: 30, y: 92, w: 30, h: 3, angle: 0.5 },
-      { x: 70, y: 92, w: 30, h: 3, angle: -0.5 },
+    walls: [],
+    emitters: [
+      { x: 62, y: 17, w: 18, h: 8, count: 9 },
+      { x: 62, y: 49, w: 18, h: 8, count: 9 },
+      { x: 62, y: 81, w: 18, h: 8, count: 9 },
     ],
-    emitters: [{ x: 50, y: 18, w: 22, h: 10, count: 30 }],
-    cups: [{ id: 'c', x: 50, y: 130, w: 22, h: 18, need: 16 }],
+    cups: [{ id: 'c', x: 62, y: 132, w: 24, h: 14, need: 18 }],
     hazards: [
-      { x: 14, y: 112, w: 16, h: 8, kind: 'lava' },
-      { x: 86, y: 112, w: 16, h: 8, kind: 'lava' },
+      { x: 30, y: 112, w: 24, h: 8, kind: 'lava' },
+      { x: 92, y: 112, w: 18, h: 8, kind: 'lava' },
     ],
-    stars: { pulls: [2, 2] },
+    stars: { pulls: [3, 4] },
     solution: [
-      { pin: 'top', atMs: 200 },
-      { pin: 'gate', atMs: 1400 },
+      { pin: 's3', atMs: 200 },
+      { pin: 's2', atMs: 2800 },
+      { pin: 's1', atMs: 5600 },
     ],
-
   },
 
   // 16 ── two colours across a drifting void.
@@ -517,25 +529,27 @@ export const LEVELS: LevelDef[] = [
     id: 19,
     name: 'Avalanche',
     world: W,
-    // A huge pour, but routed: the span carries the avalanche across the lava
-    // and the shelf holds it until you release it into the cup. Big volume AND
-    // real decisions (it used to be one pin with no hazard at all).
-    hint: '大傾瀉！斜橋撐著整條路——分兩段放，別讓它掉進岩漿',
+    spike: true,
+    hint: '上面是一整片洪水——先讓下層走乾淨再放它下來',
     pins: [
-      { id: 'hold', x: 28, y: 36, len: 24, thick: 3 },
-      { id: 'span', x: 44, y: 70, len: 46, thick: 4, angle: 0.6 },
-      { id: 'shelf', x: 78, y: 100, len: 22, thick: 3 },
+      { id: 'top', x: 50, y: 24, len: 26, thick: 3 },
+      { id: 'mid', x: 50, y: 60, len: 24, thick: 3 },
     ],
     walls: [],
-    emitters: [{ x: 28, y: 22, w: 20, h: 14, count: 38 }],
-    cups: [{ id: 'c', x: 78, y: 132, w: 26, h: 16, need: 16 }],
-    hazards: [{ x: 34, y: 128, w: 34, h: 10, kind: 'lava' }],
-    stars: { pulls: [2, 2] },
-    solution: [
-      { pin: 'hold', atMs: 200 },
-      { pin: 'shelf', atMs: 3600 },
+    emitters: [
+      { x: 50, y: 14, w: 22, h: 9, count: 16 },
+      { x: 50, y: 50, w: 20, h: 9, count: 14 },
     ],
-    traps: ['span'],
+    cups: [{ id: 'c', x: 50, y: 132, w: 26, h: 14, need: 22 }],
+    hazards: [
+      { x: 14, y: 110, w: 26, h: 9, kind: 'lava' },
+      { x: 86, y: 110, w: 26, h: 9, kind: 'lava' },
+    ],
+    stars: { pulls: [2, 3] },
+    solution: [
+      { pin: 'mid', atMs: 200 },
+      { pin: 'top', atMs: 3200 },
+    ],
   },
 
   // 20 ── grand finale: a big fountain split, a drifting black hole in the
@@ -879,29 +893,27 @@ export const LEVELS: LevelDef[] = [
     id: 30,
     name: 'Mirror Spans',
     world: W,
-    hint: '左右兩堆各走各的橋，在中間會合',
+    spike: true,
+    hint: '先下後上——上面那堆砸下來會把下面的撞飛出去',
     pins: [
-      { id: 'holdL', x: 20, y: 34, len: 18, thick: 3 },
-      { id: 'holdR', x: 80, y: 34, len: 18, thick: 3 },
-      { id: 'spanL', x: 32, y: 68, len: 38, thick: 4, angle: 0.55 },
-      { id: 'spanR', x: 68, y: 92, len: 38, thick: 4, angle: -0.55 },
+      { id: 'flood', x: 50, y: 22, len: 26, thick: 3 },
+      { id: 'hold', x: 50, y: 56, len: 24, thick: 3 },
     ],
     walls: [],
     emitters: [
-      { x: 20, y: 24, w: 16, h: 10, count: 20 },
-      { x: 80, y: 24, w: 16, h: 10, count: 20 },
+      { x: 50, y: 12, w: 22, h: 9, count: 15 },
+      { x: 50, y: 46, w: 20, h: 9, count: 15 },
     ],
-    cups: [{ id: 'c', x: 50, y: 128, w: 26, h: 18, need: 18 }],
+    cups: [{ id: 'c', x: 50, y: 128, w: 26, h: 18, need: 22 }],
     hazards: [
-      { x: 14, y: 126, w: 22, h: 9, kind: 'lava' },
-      { x: 86, y: 126, w: 22, h: 9, kind: 'lava' },
+      { x: 14, y: 122, w: 24, h: 9, kind: 'lava' },
+      { x: 86, y: 122, w: 24, h: 9, kind: 'lava' },
     ],
     stars: { pulls: [2, 2] },
     solution: [
-      { pin: 'holdL', atMs: 200 },
-      { pin: 'holdR', atMs: 1400 },
+      { pin: 'hold', atMs: 200 },
+      { pin: 'flood', atMs: 3200 },
     ],
-    traps: ['spanL', 'spanR'],
   },
 
   {
@@ -1005,27 +1017,28 @@ export const LEVELS: LevelDef[] = [
     id: 35,
     name: 'Unzip',
     world: W,
-    hint: '拔最上面那根會連鎖鬆開中層——先把最底下那堆放下去墊好',
+    spike: true,
+    hint: '拔最上面那根會連鎖鬆開中層——先把最底下那堆放下去',
     pins: [
-      { id: 'trigger', x: 50, y: 30, len: 22, thick: 3, releases: ['mid'] },
-      { id: 'mid', x: 34, y: 62, len: 22, thick: 3 },
-      { id: 'base', x: 66, y: 92, len: 22, thick: 3 },
+      { id: 'trigger', x: 50, y: 26, len: 24, thick: 3, releases: ['mid'] },
+      { id: 'mid', x: 50, y: 58, len: 22, thick: 3 },
+      { id: 'base', x: 50, y: 90, len: 22, thick: 3 },
     ],
     walls: [],
     emitters: [
-      { x: 50, y: 20, w: 18, h: 9, count: 16 },
-      { x: 34, y: 52, w: 18, h: 9, count: 16 },
-      { x: 66, y: 82, w: 18, h: 9, count: 16 },
+      { x: 50, y: 17, w: 20, h: 8, count: 10 },
+      { x: 50, y: 49, w: 18, h: 8, count: 10 },
+      { x: 50, y: 81, w: 18, h: 8, count: 10 },
     ],
-    cups: [{ id: 'c', x: 50, y: 132, w: 26, h: 16, need: 24 }],
+    cups: [{ id: 'c', x: 50, y: 132, w: 26, h: 14, need: 21 }],
     hazards: [
-      { x: 12, y: 116, w: 20, h: 8, kind: 'lava' },
-      { x: 88, y: 116, w: 20, h: 8, kind: 'lava' },
+      { x: 14, y: 112, w: 24, h: 8, kind: 'lava' },
+      { x: 86, y: 112, w: 24, h: 8, kind: 'lava' },
     ],
     stars: { pulls: [2, 3] },
     solution: [
       { pin: 'base', atMs: 200 },
-      { pin: 'trigger', atMs: 3200 },
+      { pin: 'trigger', atMs: 3400 },
     ],
   },
 
